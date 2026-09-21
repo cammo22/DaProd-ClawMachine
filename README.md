@@ -6,7 +6,9 @@ Nessuna build, nessuna dipendenza da installare: **un solo file `index.html`**.
 
 ## ▶️ Come giocare
 
-Apri `index.html` nel browser (doppio click) e premi **GIOCA ORA**.
+**Live:** 👉 **https://cammo22.github.io/DaProd-ClawMachine/**
+
+Oppure apri `index.html` nel browser (doppio click) e premi **GIOCA ORA**.
 
 > Serve la connessione internet solo per scaricare Three.js da CDN (jsDelivr, con fallback automatico su unpkg).
 
