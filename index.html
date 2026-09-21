@@ -58,6 +58,7 @@
   <div class="chip">🔥 <span id="streak">0</span> <small>combo</small></div>
   <div class="chip">⭐ Liv <span id="level">1</span></div>
   <div class="chip">🧸 <span id="prizes">0</span> <small>in gioco</small></div>
+  <div class="chip" id="mission">🎯 —</div>
 </div>
 <div id="toasts"></div>
 <div class="flash" id="flash"></div>
@@ -180,6 +181,59 @@ function makeStars(){
 }
 const stars=makeStars(); scene.add(stars);
 
+/* ================= SALA ARCADE (profondità) ================= */
+scene.fog=new THREE.Fog(0x140a2e,26,60);
+// pavimento sala con griglia neon
+function gridTex(){
+  const c=document.createElement('canvas'); c.width=c.height=512; const x=c.getContext('2d');
+  x.fillStyle='#1a1038'; x.fillRect(0,0,512,512);
+  x.strokeStyle='#4a3a9a'; x.lineWidth=2;
+  for(let i=0;i<=8;i++){ x.beginPath(); x.moveTo(i*64,0); x.lineTo(i*64,512); x.stroke();
+    x.beginPath(); x.moveTo(0,i*64); x.lineTo(512,i*64); x.stroke(); }
+  x.strokeStyle='#ff2d7888'; x.lineWidth=5;
+  x.strokeRect(2,2,508,508);
+  return new THREE.CanvasTexture(c);
+}
+const roomFloor=new THREE.Mesh(new THREE.PlaneGeometry(120,120),new THREE.MeshStandardMaterial({color:0xffffff,map:gridTex(),roughness:.95}));
+roomFloor.rotation.x=-Math.PI/2; roomFloor.position.y=-1.35; roomFloor.receiveShadow=true; scene.add(roomFloor);
+function ghostCab(x,z,col,ry){
+  const g=new THREE.Group();
+  const b=new THREE.Mesh(new THREE.BoxGeometry(5,7,4),new THREE.MeshStandardMaterial({color:0x181040,roughness:.9}));
+  b.position.y=2.2; g.add(b);
+  const edge=new THREE.Mesh(new THREE.BoxGeometry(5.15,.16,4.15),new THREE.MeshBasicMaterial({color:col}));
+  edge.position.y=5.75; g.add(edge);
+  const scr=new THREE.Mesh(new THREE.PlaneGeometry(3.4,2),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.45}));
+  scr.position.set(0,3,2.05); g.add(scr);
+  g.position.set(x,0,z); g.rotation.y=ry||0;
+  scene.add(g);
+}
+ghostCab(-8.5,-6,0xff2d78,.5); ghostCab(8.5,-6,0x22ccff,-.5);   // cabinati ai lati
+// FILA sul fondale = parete di cabinati che sprofonda nella nebbia
+[[-16,0xffd23e],[-9,0x31d158],[0,0xff2d78],[9,0x9b5cff],[16,0x22ccff]].forEach(([x,c])=>ghostCab(x,-14,c,0));
+// tubi neon a soffitto che scendono in profondità
+for(let i=0;i<5;i++){
+  const tube=new THREE.Mesh(new THREE.BoxGeometry(14,.12,.3),new THREE.MeshBasicMaterial({color:i%2?0xff2d78:0x22ccff}));
+  tube.position.set(0,8.5,-2-i*5); scene.add(tube);
+}
+// polvere sospesa (parallax di profondità)
+const dustN=140, dustPos=new Float32Array(dustN*3);
+for(let i=0;i<dustN;i++){ dustPos[i*3]=(Math.random()-.5)*40; dustPos[i*3+1]=Math.random()*9; dustPos[i*3+2]=2-Math.random()*30; }
+const dustGeo=new THREE.BufferGeometry(); dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPos,3));
+const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:0xaaccff,size:.06,transparent:true,opacity:.7}));
+scene.add(dust);
+// banner "DaProd ARCADE" in fondo
+const banC=document.createElement('canvas'); banC.width=1024; banC.height=256;
+const bx=banC.getContext('2d'); bx.fillStyle='#1a0f3a'; bx.fillRect(0,0,1024,256);
+bx.font='900 120px Segoe UI'; bx.textAlign='center'; bx.textBaseline='middle';
+bx.shadowColor='#ff2d78'; bx.shadowBlur=40; bx.fillStyle='#ff5c9a'; bx.fillText('DaProd ARCADE',512,130);
+const banner=new THREE.Mesh(new THREE.PlaneGeometry(12,3),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(banC)}));
+banner.position.set(0,7,-24); scene.add(banner);
+// stai ai lati della sala
+[[-6.5,4.5,0xff2d78],[6.5,4.5,0x22ccff]].forEach(([x,z,c])=>{
+  const stool=new THREE.Mesh(new THREE.CylinderGeometry(.5,.4,1.6,16),new THREE.MeshStandardMaterial({color:c,roughness:.6}));
+  stool.position.set(x,-.55,z); stool.castShadow=true; scene.add(stool);
+});
+
 function box(w,h,d,color,ex=.4){
   const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshStandardMaterial({color,roughness:.55,metalness:ex}));
   m.castShadow=m.receiveShadow=true; return m;
@@ -205,7 +259,44 @@ playFloor.position.set(0,.25,-.325); playFloor.receiveShadow=true; cabinet.add(p
 // davanti diviso in due lastre: al centro resta il BUCO di caduta (x -0.8..0.8)
 const holeL=new THREE.Mesh(new THREE.BoxGeometry(2.8,.5,.65),floorMat); holeL.position.set(-2.2,.25,2.375); holeL.receiveShadow=true; cabinet.add(holeL);
 const holeR=holeL.clone(); holeR.position.x=2.2; cabinet.add(holeR);
-function glass(w,h,d){ const m=box(w,h,d,0x99ccff,.9); m.material.transparent=true; m.material.opacity=.13; return m; }
+
+/* ================= FISICA VERA (cannon-es) ================= */
+let CANNON=null;
+try{ CANNON=await import('https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js'); }
+catch(e1){ try{ CANNON=await import('https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js'); }catch(e2){ console.warn('fisica non disponibile',e2); } }
+const physOn=!!CANNON;
+let world=null;
+if(physOn){
+  world=new CANNON.World({gravity:new CANNON.Vec3(0,-32,0)});
+  world.allowSleep=true;
+  const wallMat=new CANNON.Material('w');
+  const solid=(cx,cy,cz,hx,hy,hz)=>{
+    const b=new CANNON.Body({mass:0,material:wallMat,
+      shape:new CANNON.Box(new CANNON.Vec3(hx,hy,hz)),
+      position:new CANNON.Vec3(cx,cy,cz)});
+    world.addBody(b); return b;
+  };
+  solid(0,.25,-.325,3.6,.25,2.375);        // campo principale
+  solid(-2.2,.25,2.375,1.4,.25,.325);      // lastra anteriore SX
+  solid(2.2,.25,2.375,1.4,.25,.325);       // lastra anteriore DX → al centro il BUCO
+  solid(-3.72,2.75,0,.1,2.75,2.75);        // parete vetro SX
+  solid(3.72,2.75,0,.1,2.75,2.75);         // parete vetro DX
+  solid(0,2.75,-2.72,3.7,2.75,.1);         // fondale
+  solid(-2.275,2.75,2.72,1.45,2.75,.1);    // frontale SX
+  solid(2.275,2.75,2.72,1.45,2.75,.1);     // frontale DX (gap = buco premi)
+}
+function physSync(mesh,body){
+  mesh.position.set(body.position.x,body.position.y,body.position.z);
+  if(mesh.isMesh&&!mesh.isSprite) mesh.quaternion.set(body.quaternion.x,body.quaternion.y,body.quaternion.z,body.quaternion.w);
+}
+function glass(w,h,d){
+  // VETRO VERO: transmission + ior + clearcoat = si vede attraverso con riflessi
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),
+    new THREE.MeshPhysicalMaterial({color:0xdff0ff, metalness:0, roughness:.04,
+      transmission:.92, thickness:.08, ior:1.45, transparent:true,
+      clearcoat:1, clearcoatRoughness:.03, reflectivity:.6}));
+  m.castShadow=false; m.receiveShadow=false; return m;
+}
 const glassL=glass(.15,5,5.4); glassL.position.set(-3.8,3.1,0); cabinet.add(glassL);
 const glassR=glass(.15,5,5.4); glassR.position.x=3.8; glassR.position.y=3.1; cabinet.add(glassR);
 const glassB=glass(7.6,5,.15); glassB.position.set(0,3.1,-2.7); cabinet.add(glassB);
@@ -231,6 +322,18 @@ function neonTexture(){
 }
 const sign=new THREE.Mesh(new THREE.PlaneGeometry(7,1.7), new THREE.MeshBasicMaterial({map:neonTexture()}));
 sign.position.set(0,4.0,-2.62); scene.add(sign);
+// lampade marquee che corrono a colori
+const bulbs=[];
+for(let i=0;i<12;i++){
+  const b=new THREE.Mesh(new THREE.SphereGeometry(.09,8,8),new THREE.MeshBasicMaterial({color:0xffd23e}));
+  b.position.set(-3.3+i*.6,5.5,-2.66); scene.add(b); bulbs.push(b);
+}
+// adesivi sul fondale
+const stickC=document.createElement('canvas'); stickC.width=1024; stickC.height=256;
+const stk=stickC.getContext('2d'); stk.font='110px serif'; stk.textAlign='center';
+stk.fillText('🎉 🎰 💰 🎁 ⭐ 🍀',512,150);
+const sticks=new THREE.Mesh(new THREE.PlaneGeometry(6,1.5),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(stickC),transparent:true}));
+sticks.position.set(0,2.6,-2.66); scene.add(sticks);
 
 /* ================= BRACCIO MECCANICO ================= */
 // binario FISSO sul tetto (non si muove col braccio)
@@ -293,8 +396,22 @@ function spawnPrize(prize){
     const s=prize.r*2.5; m.scale.set(s,s,1);
   }
   m.userData.prize=prize;
-  m.position.set(FIELD.minX+Math.random()*(FIELD.maxX-FIELD.minX), FLOOR_TOP+prize.r+2, FIELD.minZ+Math.random()*(FIELD.maxZ-FIELD.minZ));
+  const x=FIELD.minX+Math.random()*(FIELD.maxX-FIELD.minX);
+  const z=FIELD.minZ+Math.random()*(FIELD.maxZ-FIELD.minZ);
+  const startY=5.6+Math.random()*1.6;                 // piove dall'alto = cabinato pieno
+  m.position.set(x,startY,z);
   scene.add(m); prizes.push(m);
+  if(physOn){
+    const rad=prize.r*(prize.kind==='gem'?.75:1.15);
+    const body=new CANNON.Body({mass:1,shape:new CANNON.Sphere(rad),
+      position:new CANNON.Vec3(x,startY,z),
+      material:new CANNON.Material({restitution:.2,friction:.6})});
+    body.linearDamping=.15; body.angularDamping=.4;
+    body.sleepSpeedLimit=.35; body.sleepTimeLimit=.6; body.allowSleep=true;
+    body.velocity.set((Math.random()-.5)*2,-3,(Math.random()-.5)*2);
+    body.angularVelocity.set(Math.random(),Math.random(),Math.random());
+    world.addBody(body); m.userData.body=body;
+  }
   return m;
 }
 function prizeCount(){ return prizes.length; }
@@ -307,7 +424,7 @@ const G={
   phase:'idle',      // idle | down | grab | lift | carry | fall | back
   t:0, timeLeft:0, running:false,
   streak:0, caught:null, fall:null, legLen:1, closeAmt:0,
-  shake:0
+  shake:0, intro:0
 };
 const target={x:0,z:.4};
 const CLAW_LIMIT={minX:-3.0,maxX:3.0,minZ:-2.0,maxZ:2.3};
@@ -325,6 +442,31 @@ function updateHUD(){
   document.getElementById('streak').textContent=G.streak;
   document.getElementById('level').textContent=S.level;
   document.getElementById('prizes').textContent=prizeCount();
+  updateMissionChip();
+}
+/* ================= MISSIONI 🎯 (obiettivi = dipendenza) ================= */
+const MISSIONS=[
+  {desc:'Afferra 3 peluche',   need:3, reward:6,  test:pr=>pr&&pr.kind==='plush'},
+  {desc:'Afferra 2 gemme',     need:2, reward:12, test:pr=>pr&&pr.kind==='gem'},
+  {desc:'Vinci 5 premi',       need:5, reward:8,  test:pr=>!!pr},
+  {desc:'Fai una combo x3',    need:1, reward:10, test:()=>G.streak>=3},
+  {desc:'Ruba 2 orsetti 🧸',  need:2, reward:7,  test:pr=>pr&&pr.emoji==='🧸'},
+];
+if(!S.mission) S.mission={i:0,done:0};
+function missionDef(){ return MISSIONS[S.mission.i%MISSIONS.length]; }
+function updateMissionChip(){
+  const m=missionDef();
+  const el=document.getElementById('mission');
+  if(el) el.textContent='🎯 '+m.desc+' '+Math.min(S.mission.done,m.need)+'/'+m.need+' → +'+m.reward+'🪙';
+}
+function missionCheck(pr){
+  const m=missionDef();
+  if(m.test(pr)) S.mission.done++;
+  if(S.mission.done>=m.need){
+    S.credits+=m.reward; S.mission.i++; S.mission.done=0;
+    SFX.big(); flash(.4); toast('🎯 MISSIONE COMPLETATA! +'+m.reward+' gettoni',true);
+  }
+  save(); updateMissionChip();
 }
 function addXP(n){
   S.xp+=n;
@@ -356,7 +498,8 @@ addEventListener('pointerup',()=>moveTouch=null);
 function startRound(){
   if(G.running||G.phase!=='idle') return;
   G.running=true; G.timeLeft=gameTime();
-  G.phase='idle'; G.streak=Math.max(0,G.streak-0);
+  G.phase='idle'; G.intro=1.6;
+  while(prizeCount()<22) spawnPrize();          // il cabinato si RICOLMA a ogni round
   toast('⏱️ Hai '+G.timeLeft+' secondi!');
   updateHUD();
 }
@@ -386,11 +529,42 @@ function win(prize){
   if(prize.kind==='gem'){ SFX.gem(); toast('💎 '+prize.name+'! +'+total+' gettoni',true); }
   else { SFX.coin(); toast(prize.emoji+' '+prize.name+'! +'+total+' 🪙', G.streak>2); }
   if(G.streak>=3) setTimeout(()=>toast('🔥 COMBO x'+G.streak+'! bonus +'+Math.round((bonus-1)*100)+'%',true),350);
-  flash(.25); G.shake=.35;
+  flash(.3); G.shake=.35;
+  confetti(claw.position.x,2,2.2);
+  missionCheck(prize);
   updateHUD();
 }
 function lose(){
   G.streak=0; SFX.fail(); toast('😵 Mancato! Riprova'); updateHUD();
+}
+/* ================= CONFETTI 🎊 ================= */
+function confetti(x,y,z){
+  const n=70, pos=new Float32Array(n*3), col=new Float32Array(n*3), vel=[];
+  const pal=[new THREE.Color(0xffd23e),new THREE.Color(0xff2d78),new THREE.Color(0x22ccff),new THREE.Color(0x31d158),new THREE.Color(0xffffff)];
+  for(let i=0;i<n;i++){
+    pos[i*3]=x; pos[i*3+1]=y; pos[i*3+2]=z;
+    const c=pal[(Math.random()*pal.length)|0];
+    col[i*3]=c.r; col[i*3+1]=c.g; col[i*3+2]=c.b;
+    vel.push(new THREE.Vector3((Math.random()-.5)*7,Math.random()*8+3,(Math.random()-.5)*7));
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  const mat=new THREE.PointsMaterial({size:.15,vertexColors:true,transparent:true});
+  const pts=new THREE.Points(g,mat); scene.add(pts);
+  const t0=performance.now();
+  (function anim(){
+    const el=(performance.now()-t0)/1000;
+    if(el>1.5){ scene.remove(pts); g.dispose(); return; }
+    const a=g.attributes.position.array;
+    for(let i=0;i<n;i++){
+      vel[i].y-=14*.016;
+      a[i*3]+=vel[i].x*.016; a[i*3+1]+=vel[i].y*.016; a[i*3+2]+=vel[i].z*.016;
+    }
+    g.attributes.position.needsUpdate=true;
+    mat.opacity=1-el/1.5;
+    requestAnimationFrame(anim);
+  })();
 }
 
 /* ================= LOOP ================= */
@@ -415,13 +589,49 @@ function animate(){
   claw.position.z+=(target.z-claw.position.z)*Math.min(1,dt*8);
   armZ.position.z=-claw.position.z/2;                       // raccordo mobile al binario fisso
   armZ.scale.z=Math.max(.05,Math.abs(claw.position.z));
+  // ---- animazione DINAMICA/STRANA del braccio ----
+  {
+    const px0=(claw.userData.px0===undefined)?claw.position.x:claw.userData.px0;
+    const pz0=(claw.userData.pz0===undefined)?claw.position.z:claw.userData.pz0;
+    const vx=(claw.position.x-px0)/Math.max(dt,.001), vz=(claw.position.z-pz0)/Math.max(dt,.001);
+    claw.userData.px0=claw.position.x; claw.userData.pz0=claw.position.z;
+    // slancio pendolare secondo la velocità (strano ma vivo)
+    const gain=(G.phase==='idle')?1:.12;                   // poco mentre tiene un premio
+    const tz=THREE.MathUtils.clamp(-vx*.05,-.32,.32)*gain;
+    const tx=THREE.MathUtils.clamp( vz*.05,-.32,.32)*gain;
+    claw.rotation.z+=(tz-claw.rotation.z)*Math.min(1,dt*6);
+    claw.rotation.x+=(tx-claw.rotation.x)*Math.min(1,dt*6);
+    // pinza VIVA: vortice e "masticazione" delle dita
+    if(G.phase==='idle'){
+      pinch.rotation.y+=dt*(G.running?1.6:3.2);
+      G.closeAmt=.18+Math.sin(t*3.2)*.14;
+    } else if(G.phase==='down'||G.phase==='lift'){
+      pinch.rotation.y+=dt*.7;                             // vortice mentre scende/sale
+    }
+    // carrello che bobba
+    carriage.position.y=-.25+Math.sin(t*(G.phase==='idle'?4:9))*.035;
+  }
   applyFingers(G.closeAmt);
 
   const pinchY=()=>claw.position.y+pinch.position.y;        // quota mondiale della pinza
+  if(physOn) world.step(1/60,dt,3);
 
   if(G.phase==='down'){
     G.legLen=Math.min(2.3,G.legLen+dt*2.2); leg.scale.y=G.legLen; leg.position.y=-.3-G.legLen/2;
     pinch.position.y=-.35-G.legLen;
+    // la pinza che scende SPINGE i premi (interazione fisica vera)
+    if(physOn){
+      const py=pinchY();
+      prizes.forEach(p=>{
+        const b=p.userData.body; if(!b||p.userData.held||p.userData.released) return;
+        const dx=p.position.x-claw.position.x, dz=p.position.z-claw.position.z, d=Math.hypot(dx,dz);
+        if(d<.9&&Math.abs(p.position.y-py)<1.3){
+          b.wakeUp();
+          b.velocity.x+=(dx/(d+.15))*14*dt;
+          b.velocity.z+=(dz/(d+.15))*14*dt;
+        }
+      });
+    }
     if(pinchY()<=1.65){ G.phase='grab'; G.t=0; }
   }
   else if(G.phase==='grab'){
@@ -431,12 +641,14 @@ function animate(){
       const c=claw.position, mr=magnetR();
       let best=null,bd=1e9;
       prizes.forEach(p=>{
-        if(p.userData.held||p.userData.falling) return;
+        if(p.userData.held||p.userData.released) return;
         const d=Math.hypot(p.position.x-c.x,p.position.z-c.z);
         if(d<bd){ bd=d; best=p; }
       });
       if(best && bd<mr && Math.random()<pickChance(best.userData.prize)){
         G.caught=best; best.userData.held=true;
+        const b=best.userData.body;
+        if(b){ b.type=CANNON.Body.KINEMATIC; b.velocity.set(0,0,0); b.angularVelocity.set(0,0,0); }
         SFX.grab(); G.phase='lift'; G.t=0;
         toast('🦾 PRESA! su su…');
       } else { lose(); G.phase='lift'; G.t=0; G.caught=null; }
@@ -446,7 +658,20 @@ function animate(){
     G.t+=dt;
     G.legLen=Math.max(1,G.legLen-dt*2.4); leg.scale.y=G.legLen; leg.position.y=-.3-G.legLen/2;
     pinch.position.y=-.35-G.legLen;
-    if(G.caught){ G.caught.position.set(claw.position.x,pinchY()-.85,claw.position.z); }
+    if(G.caught){
+      const px=claw.position.x, py=pinchY()-.85, pz=claw.position.z;
+      const b=G.caught.userData.body;
+      if(b){ b.position.set(px,py,pz); b.velocity.set(0,0,0); b.angularVelocity.set(0,0,0); }
+      else G.caught.position.set(px,py,pz);
+      // 💦 il premio può SCIVOLARE dalle dita (le gemme scivolano di più!)
+      const pr=G.caught.userData.prize;
+      const rate=(pr.kind==='gem'?.5:.12)*(1-gripChance()*.55);
+      if(Math.random()<rate*dt){
+        if(b){ b.type=CANNON.Body.DYNAMIC; b.wakeUp(); b.velocity.set((Math.random()-.5)*3,1.5,(Math.random()-.5)*3); }
+        G.caught.userData.held=false; G.caught=null;
+        G.streak=0; SFX.fail(); toast('😅 SCIVOLATO dalle dita!'); updateHUD();
+      }
+    }
     if(G.legLen<=1.05&&G.t>1){
       if(G.caught){ G.phase='carry'; G.t=0; }
       else { G.phase='back'; G.t=0; }
@@ -455,28 +680,40 @@ function animate(){
   else if(G.phase==='carry'){                                // porta il premio sopra il buco
     G.t+=dt;
     target.x+=(0-target.x)*dt*5; target.z+=(2.3-target.z)*dt*5;
-    if(G.caught) G.caught.position.set(claw.position.x,pinchY()-.85,claw.position.z);
+    if(G.caught){
+      const px=claw.position.x, py=pinchY()-.85, pz=claw.position.z;
+      const b=G.caught.userData.body;
+      if(b){ b.position.set(px,py,pz); b.velocity.set(0,0,0); b.angularVelocity.set(0,0,0); }
+      else G.caught.position.set(px,py,pz);
+    }
     if((Math.abs(claw.position.x)<.15&&Math.abs(claw.position.z-2.3)<.15)||G.t>5){
       G.closeAmt=0;
-      G.fall={m:G.caught,prize:G.caught.userData.prize};
-      G.caught.userData.falling=true; G.caught=null;
+      const b=G.caught.userData.body;
+      G.caught.userData.held=false; G.caught.userData.released=true;
+      if(b){ b.type=CANNON.Body.DYNAMIC; b.wakeUp(); b.velocity.set(0,-3,0); b.angularVelocity.set(0,0,0); }
+      G.fall=G.caught; G.caught=null;
       SFX.drop(); G.phase='fall'; G.t=0;
     }
   }
-  else if(G.phase==='fall'){                                // cade nel buco → PREMIO
+  else if(G.phase==='fall'){          // la FISICA lo fa cadere nel buco → PREMIO
     G.t+=dt;
     const f=G.fall;
-    f.m.position.y-=dt*6;
-    if(f.m.position.y<-.4){
-      scene.remove(f.m);
-      const i=prizes.indexOf(f.m); if(i>=0) prizes.splice(i,1);
-      win(f.prize); G.fall=null;
-      G.phase='back'; G.t=0;
+    const fy=f&&f.userData.body?f.userData.body.position.y:(f?f.position.y:1);
+    if(!f||fy<-.1||G.t>6){
+      if(f){
+        const b=f.userData.body; if(b&&world) world.removeBody(b);
+        scene.remove(f);
+        const i=prizes.indexOf(f); if(i>=0) prizes.splice(i,1);
+        win(f.userData.prize);
+      }
+      G.fall=null; G.phase='back'; G.t=0;
     }
   }
   else if(G.phase==='back'){
     target.x+=(0-target.x)*dt*4; target.z+=(.4-target.z)*dt*4;
     G.t+=dt;
+    G.legLen=Math.max(1,G.legLen-dt*2); leg.scale.y=G.legLen; leg.position.y=-.3-G.legLen/2;
+    pinch.position.y=-.35-G.legLen;
     G.closeAmt=Math.max(0,G.closeAmt-dt*1.5);
     if(G.t>1.2){
       G.phase='idle'; document.getElementById('dropBtn').disabled=false;
@@ -490,21 +727,58 @@ function animate(){
   const rs=magnetR()/.52*(1+Math.sin(performance.now()*.006)*.1);
   retic.scale.set(rs,rs,1);
 
+  // FISICA → mesh (i premi si impilano, rotolano, cadono davvero)
   prizes.forEach(p=>{
-    if(p.userData.held||p.userData.falling) return;
-    const r=p.userData.prize.r;
-    p.position.y+=(FLOOR_TOP+r-p.position.y)*Math.min(1,dt*6);
+    const b=p.userData.body;
+    if(physOn&&b){ physSync(p,b); }
+    else if(!p.userData.held){
+      const r=p.userData.prize.r;
+      p.position.y+=(FLOOR_TOP+r-p.position.y)*Math.min(1,dt*6);
+    }
   });
 
-  if(prizeCount()<8 && Math.random()<dt*2) spawnPrize();
+  if(prizeCount()<20 && Math.random()<dt*3) spawnPrize();   // cabinato sempre RICOLMO
 
   neon1.position.set(Math.cos(t*1.6)*3.6,4.5,Math.sin(t*1.6)*2.6-0.5);   // discoteca!
   neon2.position.set(Math.cos(t*1.6+Math.PI)*3.6,4.5,Math.sin(t*1.6+Math.PI)*2.6-0.5);
   neon3.intensity=50+Math.sin(t*6)*25;
   stars.rotation.y=t*.02;
   cLight.intensity=15+Math.sin(t*8)*5;
+  if(typeof bulbs!=='undefined') bulbs.forEach((b,i)=>b.material.color.setHSL((t*.3+i*.08)%1,.95,.6));
+  if(typeof dust!=='undefined'){ dust.rotation.y=t*.012; dust.position.y=Math.sin(t*.3)*.25; }
 
-  camera.position.copy(camPos);
+  // ============ CAMERA DINAMICA (VICINA, tracking X veloce) ============
+  let dPos,dLook,dFov=52;
+  const cx=claw.position.x, cz=claw.position.z;
+  if(G.phase==='down'||G.phase==='grab'){
+    dPos=new THREE.Vector3(cx*.75,4.0,6.6);              // MOLTO VICINO all'azione
+    dLook=new THREE.Vector3(cx*.85,1.6,cz*.75);
+    dFov=44;
+  } else if(G.phase==='lift'||G.phase==='carry'||G.phase==='fall'){
+    dPos=new THREE.Vector3(cx*.6,4.6,7.4);               // insegue il premio da vicino
+    dLook=new THREE.Vector3(cx*.85,2.3,cz*.6);
+    dFov=47;
+  } else {
+    const a=Math.sin(t*.22)*.55;                          // orbita più stretta = più vicino
+    dPos=new THREE.Vector3(Math.sin(a)*9.2+cx*.3, 5.2+Math.sin(t*.8)*.12, Math.cos(a)*9.2);
+    dLook=new THREE.Vector3(cx*.2,1.7,-.4);
+    dFov=52;
+  }
+  if(G.intro>0){                                          // tuffo cinematografico all'avvio
+    G.intro=Math.max(0,G.intro-dt);
+    const e=(G.intro/1.6); const ee=e*e;
+    dPos=new THREE.Vector3(dPos.x*(1-ee), dPos.y+ee*3.5, dPos.z+ee*6);
+    dLook=new THREE.Vector3(dLook.x, dLook.y+ee*2, dLook.z);
+    dFov=52+ee*22;                                        // FOV largo = sensazione di "infinito"
+  }
+  // tracking: sinistra/destra VELOCE, su/giù e avanti/indietro morbido
+  const kx=1-Math.exp(-dt*7.5), ky=1-Math.exp(-dt*3.4);
+  camera.position.x+=(dPos.x-camera.position.x)*kx;
+  camera.position.y+=(dPos.y-camera.position.y)*ky;
+  camera.position.z+=(dPos.z-camera.position.z)*ky;
+  camLook.lerp(dLook,1-Math.exp(-dt*5));
+  camera.fov+=(dFov-camera.fov)*(1-Math.exp(-dt*3));
+  camera.updateProjectionMatrix();
   if(G.shake>0){
     camera.position.x+=(Math.random()-.5)*G.shake;
     camera.position.y+=(Math.random()-.5)*G.shake;
@@ -571,7 +845,7 @@ audioOn=S.sound!==false;
 document.getElementById('soundBtn').textContent=audioOn?'🔊':'🔇';
 
 /* init */
-for(let i=0;i<16;i++) spawnPrize();
+for(let i=0;i<26;i++) spawnPrize();
 updateHUD();
 document.getElementById('timer').textContent='--';
 addEventListener('resize',()=>{

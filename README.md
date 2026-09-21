@@ -1,6 +1,6 @@
 # 🦾 DaProd Claw Machine
 
-Un **claw machine arcade 3D** giocabile direttamente nel browser: cabinato in Three.js, braccio meccanico a 3 dita, premi da afferrare, combo, XP, negozio di potenziamenti e salvataggio locale.
+Un **claw machine arcade 3D** giocabile direttamente nel browser: cabinato con **vetro fisico**, braccio meccanico a 3 dita **animato dinamicamente**, premi con **fisica vera** (cannon-es) che piovono e si impilano, camera cinematografica, missioni, combo, XP, negozio di potenziamenti e salvataggio locale.
 
 Nessuna build, nessuna dipendenza da installare: **un solo file `index.html`**.
 
@@ -21,12 +21,20 @@ Oppure apri `index.html` nel browser (doppio click) e premi **GIOCA ORA**.
 
 ## 🎮 Meccaniche
 
-- **Round a tempo** — 25 secondi base per partita, ogni tentativo di presa consuma il round.
-- **Presa a probabilità** — `gripChance()` parte dal 42% e sale con l'upgrade *Presa forte*; le **gemme** hanno 0.55× di probabilità, e la presa è più difficile quando il campo è pieno di premi.
-- **Calamita** — il premio più vicino entro il raggio di presa è il candidato; il raggio cresce con l'upgrade.
+- **Round a tempo** — 25 secondi base (+5/livello *Più tempo*); il primo tocco del tasto rosso avvia il round.
+- **Fisica vera (cannon-es)** — i premi cadono dall'alto, si impilano e rotolano; la pinza che scende li **spinge**; il premio trattenuto può **scivolare dalle dita** (le gemme scivolano ~5× più dei peluche; *Presa forte* riduce il rischio). La caduta nel buco è governata dalla fisica.
+- **Presa a probabilità** — `gripChance()` parte dal 42% (+18% sui peluche), ×0.55 sulle gemme, più difficile con campo pieno.
+- **Calamita** — il premio più vicino entro il raggio di presa è il candidato; il raggio cresce con l'upgrade (reticolo di mira sul pavimento).
+- **Missioni 🎯** — obiettivi rotanti nell'HUD (3 peluche, 2 gemme, combo x3, 2 orsetti…) con ricompensa.
 - **Combo / streak** — prese consecutive moltiplicano i gettoni: bonus `1 + (streak-1) × 0.5`.
 - **XP e livelli** — ogni premio dà XP (le gemme ×3); al level-up si ricevono **+5 gettoni**.
-- **Rigenerazione campo** — quando restano meno di 8 premi, ne ricompare uno nuovo.
+- **Cabinato sempre ricolmo** — 26 premi a caricamento, refill a 22 a ogni round, respawn continuo sotto 20.
+
+## 🎥 Camera dinamica
+
+- **Tuffo intro** all'avvio del round con FOV largo (sensazione di infinito)
+- **Zoom vicino** (FOV 44) sulla discesa del braccio, inseguimento del premio sul sollevamento
+- **Tracking sinistra/destra veloce**, orbita morbida a riposo, punch + shake sulle vittorie
 
 ## 🏆 Premi
 
@@ -39,7 +47,7 @@ Oppure apri `index.html` nel browser (doppio click) e premi **GIOCA ORA**.
 | 💎 Gemma | 5 | 8 | gemma |
 | 💠 Diamante | 10 | 4 | gemma |
 
-I plush hanno **facce disegnate a runtime** su canvas (occhi + sorriso, tinta dal colore del premio); le gemme sono ottaedri emissivi.
+I plush sono **sprite emoji** grandi e sempre inquadrati; le gemme sono ottaedri emissivi. Pannelli del cabinet in **MeshPhysicalMaterial** con `transmission` + IOR + clearcoat: **vetro vero**, si vede attraverso con riflessi. Sala arcade di sfondo con cabinati fantasma, tubi neon a soffitto, griglia al neon, polvere sospesa e banner *DaProd ARCADE*.
 
 ## 🛒 Negozio
 
@@ -54,21 +62,23 @@ I plush hanno **facce disegnate a runtime** su canvas (occhi + sorriso, tinta da
 
 ## 💾 Salvataggio
 
-Progressi salvati in `localStorage` con chiave **`daprod_claw_v1`**: gettoni, livello, XP, potenziamenti, stato audio, combo record e premi totali. Il bonus 🎁 ricarica **+10 gettoni** ogni 60 secondi.
+Progressi salvati in `localStorage` con chiave **`daprod_claw_v1`**: gettoni, livello, XP, potenziamenti, stato audio, combo record, premi totali e **stato missioni**. Il bonus 🎁 ricarica **+10 gettoni** ogni 60 secondi.
 
 ## 🛠️ Stack tecnico
 
-- **Three.js 0.160.0** da CDN (jsDelivr → fallback unpkg) via `import()` dinamico, senza bundler.
+- **Three.js 0.160.0** + **cannon-es 0.20.0** da CDN (jsDelivr → fallback unpkg) via `import()` dinamico, senza bundler.
 - **Web Audio API** per tutti gli SFX (sintetizzati a runtime, nessun file audio).
-- **Canvas 2D runtime** per texture di insegna neon, pavimento a scacchi e facce dei plush.
-- Rendering: ombre `PCFSoftShadowMap`, luci neon orbitanti stile disco, campo stelle, strisce LED emissive.
+- **Canvas 2D runtime** per insegna neon, pavimento a scacchi, griglia sala, emoji dei premi, banner.
+- Rendering: ombre `PCFSoftShadowMap`, luci neon orbitanti stile disco, lampade marquee HSL, campo stelle, confetti, strisce LED emissive.
 - **Nessuna immagine o asset esterno**: tutto il file è autonomo.
 
 ## 📁 Struttura
 
 ```
 DaProd-ClawMachine/
-└── index.html    # gioco completo (HTML + CSS + JS)
+├── index.html    # gioco completo (HTML + CSS + JS)
+├── README.md
+└── .gitignore
 ```
 
 ---
