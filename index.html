@@ -385,11 +385,12 @@ for(let i=0;i<9;i++){                                   // 9 DENTI = gabbia vera
   pivot.userData.tan=new THREE.Vector3(-Math.sin(a),0,Math.cos(a)); // asse tangente: chiude verso l'interno
   pinch.add(pivot); fingers.push(pivot);
 }
-function applyFingers(v,wob,tt){ // 0 aperto → 1 chiuso: chiusura a ONDA + vibrazione organica
+function applyFingers(v,wob,tt){ // 0 aperto → 1 chiuso: curva profonda + onda + tremolio
   fingers.forEach((p,idx)=>{
     const eff=Math.max(0,Math.min(1,v*1.35-idx*.045))            // cascata: ogni dente ritarda
              +(wob?Math.sin((tt||0)*6+idx*.9)*.07:0);            // tremolio vivo per dente
-    p.setRotationFromAxisAngle(p.userData.tan, -eff*1.05);
+    p.setRotationFromAxisAngle(p.userData.tan, -eff*1.4);        // PIEGA FORTE: si chiudono su loro stessi
+    p.position.y=-eff*.1;                                        // gancio: scendono anche verso il basso
   });
 }
 
@@ -535,12 +536,22 @@ addEventListener('pointerup',()=>moveTouch=null);
 
 /* ================= SEQUENZA BRACCIO ================= */
 function startRound(){
-  if(G.running||G.phase!=='idle') return;
+  if(G.phase!=='idle'||G.running) return false;
+  if(S.credits<1){                               // ⚠️ controlli PRIMA, addebito DOPO (mai gettoni mangiati)
+    SFX.fail();
+    toast('🪙 SERVONO GETTONI! Premi 🎁 per il bonus gratis',true);
+    const bb=document.getElementById('bonusBtn');
+    bb.style.transition='transform .15s'; bb.style.transform='scale(1.35)';
+    setTimeout(()=>bb.style.transform='',600);
+    return false;
+  }
+  S.credits-=1; save();                          // gettone consumato UNA volta, solo qui
   G.running=true; G.timeLeft=gameTime();
   G.phase='idle'; G.intro=1.6;
   while(prizeCount()<50) spawnPrize();          // il cabinato si RICOLMA a ogni round
-  toast('⏱️ Hai '+G.timeLeft+' secondi!');
+  toast('🪙 Gettone inserito! ⏱️ Hai '+G.timeLeft+' secondi!');
   updateHUD();
+  return true;
 }
 function doDrop(){
   if(!G.running){ startRound(); return; }   // primo tocco = inserisci round
@@ -696,14 +707,14 @@ function animate(){
         }
       });
     }
-    if(pinchY()<=1.65){ G.phase='grab'; G.t=0; snapFX(); }   // 💥 SCATTO
+    if(pinchY()<=1.65){ G.phase='grab'; G.t=0; G.closeAmt=0; snapFX(); }   // 💥 SCATTO da zero
   }
   else if(G.phase==='grab'){
-    G.t+=dt*.42;                                  // ⏳ SLOW-MO PROFONDO: il gesto È il premio
-    G.shake=Math.max(G.shake,.045);               // vibrazione della camera durante lo scatto
-    G.closeAmt=Math.min(1,G.t*2.5);
+    G.t+=dt*.8;                                   // rallentatore APPENA accennato (MAI blocchi)
+    G.shake=Math.max(G.shake,.04);                // vibrazione sottile durante lo scatto
+    G.closeAmt=Math.min(1,G.t*3.4);
     if(!G.snapDone&&G.closeAmt>=1){ G.snapDone=true; SFX.clank(); }
-    if(G.t>.42){
+    if(G.t>.3){
       const c=claw.position, mr=magnetR();
       let best=null,bd=1e9;
       prizes.forEach(p=>{
@@ -723,7 +734,10 @@ function animate(){
   else if(G.phase==='lift'){
     G.t+=dt;
     if(!G.liftSfx){ G.liftSfx=true; SFX.rise(); }
-    G.legLen=Math.max(1,G.legLen-dt*2.4); leg.scale.y=G.legLen; leg.position.y=-.3-G.legLen/2;
+    // risalita con EASE: parte dolce (il premio resta fermo), poi accelera fino in cima
+    const up=(4.9-G.legLen)/3.9;
+    G.legLen=Math.max(1,G.legLen-dt*(1.5+2.4*Math.min(1,up)));
+    leg.scale.y=G.legLen; leg.position.y=-.3-G.legLen/2;
     pinch.position.y=-.35-G.legLen;
     if(G.caught){
       G.swing=(G.swing||0)+dt*6.5;                       // il premio DONDOLA appeso
@@ -790,6 +804,20 @@ function animate(){
       G.phase='idle'; document.getElementById('dropBtn').disabled=false;
       if(!G.running){ document.getElementById('timer').textContent='--'; toast('⏰ ROUND FINITO — premi DISCI per giocare!'); }
     }
+  }
+
+  // ============ WATCHDOG: MAI bloccare (reset di sicurezza dopo 12s) ============
+  if(G._ph!==G.phase){ G._ph=G.phase; G._phT=0; }
+  G._phT=(G._phT||0)+dt;
+  if(G.phase!=='idle'&&G._phT>12){
+    if(G.caught){ const b=G.caught.userData.body; if(b){ b.type=CANNON.Body.DYNAMIC; b.wakeUp&&b.wakeUp(); } G.caught.userData.held=false; G.caught=null; }
+    if(G.fall){ const fb=G.fall.userData.body; if(fb&&world) world.removeBody(fb); scene.remove(G.fall); const fi=prizes.indexOf(G.fall); if(fi>=0) prizes.splice(fi,1); G.fall=null; }
+    G.closeAmt=0; G.legLen=1;
+    leg.scale.y=1; leg.position.y=-.8; pinch.position.y=-1.35;
+    G.phase='idle'; G._phT=0;
+    document.getElementById('dropBtn').disabled=false;
+    SFX.fail(); toast('⚙️ Autorestart — si continua a giocare!');
+    updateHUD();
   }
 
   // reticolo di mira: segue il braccio, mostra il raggio di presa
@@ -864,6 +892,11 @@ function animate(){
   }
   camera.lookAt(camLook);
 
+  // ============ SICUREZZA: MAI rimanere senza gettoni ============
+  if(S.credits<1 && Date.now()-(S._lastFree||0)>90000){
+    S._lastFree=Date.now(); S.credits+=5; save(); updateHUD();
+    SFX.coin(); toast('🪙 +5 gettoni gratis! (mai blocchi)',true);
+  }
   if(G.running&&G.phase!=='over'){
     G.timeLeft-=dt;
     const s=Math.max(0,Math.ceil(G.timeLeft));
@@ -873,6 +906,12 @@ function animate(){
     if(G.timeLeft<=0){ toast('⏰ Tempo finito!',true); finishRound(); }
   }
 
+  // etichetta pulsante: mostra il costo quando puoi giocare
+  {
+    const db=document.getElementById('dropBtn');
+    const want=(!G.running&&G.phase==='idle')?'GIOCA<br>1 🪙':'DISCI<br>↓';
+    if(db.innerHTML!==want) db.innerHTML=want;
+  }
   renderer.render(scene,camera);
 }
 function pickChance(pr){
