@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - cammo22-cabinet-hud-integration
   workflow_dispatch:
 
 permissions:
