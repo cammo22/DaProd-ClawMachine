@@ -9,8 +9,8 @@
   html,body{width:100%;height:100%;overflow:hidden;background:#0a0618;font-family:'Segoe UI',system-ui,sans-serif;color:#fff;touch-action:none}
   #game{position:fixed;inset:0}
   canvas{display:block}
-  /* HUD */
-  #hud{position:fixed;top:10px;left:10px;right:10px;display:flex;gap:8px;flex-wrap:wrap;z-index:10;pointer-events:none}
+  /* HUD state is rendered on the cabinet's physical front display. */
+  #hud{display:none}
   .chip{background:rgba(10,8,30,.75);border:1px solid #ff2d7866;border-radius:12px;padding:6px 12px;font-weight:700;font-size:15px;backdrop-filter:blur(4px)}
   .chip small{opacity:.7;font-weight:400}
   #timer{color:#ffd23e;min-width:64px;text-align:center}
@@ -352,6 +352,52 @@ const s3=strip(.12,7,.12,0x22ccff); s3.position.set(3.9,4.0,2.72); cabinet.add(s
 const s4=strip(7.6,.12,.12,0xffd23e); s4.position.set(0,1.55,2.72); cabinet.add(s4);
 scene.add(cabinet);
 
+// Display frontale del cabinato: lo stato vive sulla macchina, non sopra il gameplay.
+const cabinetHudCanvas=document.createElement('canvas');
+cabinetHudCanvas.width=1400; cabinetHudCanvas.height=220;
+const cabinetHudCtx=cabinetHudCanvas.getContext('2d');
+const cabinetHudTexture=new THREE.CanvasTexture(cabinetHudCanvas);
+cabinetHudTexture.colorSpace=THREE.SRGBColorSpace;
+const cabinetHudScreen=new THREE.Mesh(
+  new THREE.PlaneGeometry(7.45,1.12),
+  new THREE.MeshBasicMaterial({map:cabinetHudTexture,transparent:true})
+);
+cabinetHudScreen.position.set(0,1.02,4.12);
+cabinetHudScreen.renderOrder=3;
+cabinet.add(cabinetHudScreen);
+let cabinetHudSnapshot='';
+function refreshCabinetHud(){
+  const mission=typeof missionDef==='function'?missionDef():null;
+  const time=G.running?Math.max(0,Math.ceil(G.timeLeft))+'s':'--';
+  const mode=G.running?'PARTITA':'GIOCA';
+  const missionText=mission?mission.desc+' '+Math.min(S.mission.done,mission.need)+'/'+mission.need:'—';
+  const snapshot=[S.credits,mode,time,G.streak,S.level,S.xp,prizeCount(),missionText].join('|');
+  if(snapshot===cabinetHudSnapshot) return;
+  cabinetHudSnapshot=snapshot;
+  const x=cabinetHudCtx;
+  x.clearRect(0,0,cabinetHudCanvas.width,cabinetHudCanvas.height);
+  const grad=x.createLinearGradient(0,0,1400,0);
+  grad.addColorStop(0,'#130b31'); grad.addColorStop(.5,'#24104c'); grad.addColorStop(1,'#130b31');
+  x.fillStyle=grad; x.fillRect(0,0,1400,220);
+  x.strokeStyle='#ff2d78'; x.lineWidth=8; x.strokeRect(5,5,1390,210);
+  x.font='900 30px Segoe UI, sans-serif'; x.textBaseline='middle';
+  const columns=[
+    {x:34,label:'GETTONI',value:'🪙 '+S.credits,color:'#ffd23e'},
+    {x:285,label:mode,value:time+' · 1 🪙',color:G.running?'#7dffb2':'#ffd23e'},
+    {x:535,label:'COMBO',value:'🔥 x'+G.streak,color:'#ff709f'},
+    {x:755,label:'LIVELLO',value:'⭐ '+S.level+'  XP '+S.xp+'/'+(S.level*10),color:'#9be7ff'},
+    {x:1055,label:'PREMI',value:'🎁 '+prizeCount(),color:'#7dffb2'}
+  ];
+  columns.forEach((col,i)=>{
+    if(i>0){ x.fillStyle='#ffffff2b'; x.fillRect(col.x-22,38,2,144); }
+    x.fillStyle='#cfc3ff'; x.font='700 20px Segoe UI, sans-serif'; x.fillText(col.label,col.x,48);
+    x.fillStyle=col.color; x.font='900 30px Segoe UI, sans-serif'; x.fillText(col.value,col.x,103);
+  });
+  x.fillStyle='#cfc3ff'; x.font='700 18px Segoe UI, sans-serif'; x.fillText('🎯 OBIETTIVO',34,164);
+  x.fillStyle='#ffffff'; x.font='700 19px Segoe UI, sans-serif'; x.fillText(missionText+'  → +'+(mission?mission.reward:0)+' 🪙',215,164);
+  cabinetHudTexture.needsUpdate=true;
+}
+
 // insegna neon (texture runtime)
 function neonTexture(){
   const c=document.createElement('canvas'); c.width=1024; c.height=256; const x=c.getContext('2d');
@@ -504,6 +550,7 @@ function updateHUD(){
   document.getElementById('level').textContent=S.level;
   document.getElementById('prizes').textContent=prizeCount();
   updateMissionChip();
+  refreshCabinetHud();
 }
 /* ================= MISSIONI 🎯 (obiettivi = dipendenza) ================= */
 const MISSIONS=[
@@ -956,6 +1003,7 @@ function animate(){
     const s=Math.max(0,Math.ceil(G.timeLeft));
     const el=document.getElementById('timer');
     el.textContent=s+'s'; el.classList.toggle('low',s<=5);
+    refreshCabinetHud();
     if(s!==lastTick&&s<=5&&s>0){ SFX.tick(); lastTick=s; }
     if(G.timeLeft<=0){ toast('⏰ Tempo finito!',true); finishRound(); }
   }

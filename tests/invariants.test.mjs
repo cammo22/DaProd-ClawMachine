@@ -37,3 +37,17 @@ test('recovery releases the held prize and returns to an idle playable state', (
   assert.match(source, /G\.running=false; G\.tokenCharged=false/);
   assert.match(source, /recoverGame\('⚙️ Autorestart — si continua a giocare!'\)/);
 });
+
+test('the HUD is physically integrated into the cabinet display', () => {
+  assert.match(source, /#hud\{display:none\}/);
+  assert.match(source, /const cabinetHudScreen=new THREE\.Mesh/);
+  assert.match(source, /cabinetHudScreen\.position\.set\(0,1\.02,4\.12\)/);
+  assert.match(source, /function refreshCabinetHud\(\)/);
+  assert.match(source, /GETTONI/);
+  assert.match(source, /PARTITA/);
+  assert.match(source, /COMBO/);
+  assert.match(source, /LIVELLO/);
+  assert.match(source, /PREMI/);
+  assert.match(source, /OBIETTIVO/);
+  assert.match(source, /refreshCabinetHud\(\);/);
+});
