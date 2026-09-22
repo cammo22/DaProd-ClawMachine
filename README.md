@@ -1,6 +1,6 @@
 # 🦾 DaProd Claw Machine
 
-Un **claw machine arcade 3D** giocabile direttamente nel browser: cabinato con **vetro fisico**, braccio meccanico a 3 dita **animato dinamicamente**, premi con **fisica vera** (cannon-es) che piovono e si impilano, camera cinematografica, missioni, combo, XP, negozio di potenziamenti e salvataggio locale.
+Un **claw machine arcade 3D** giocabile direttamente nel browser: cabinato con **vetro fisico**, braccio meccanico a **9 braccetti articolati** **animato dinamicamente**, premi con **fisica vera** (cannon-es) che piovono e si impilano, camera cinematografica, missioni, combo, XP, negozio di potenziamenti e salvataggio locale.
 
 Nessuna build, nessuna dipendenza da installare: **un solo file `index.html`**.
 
@@ -28,7 +28,7 @@ Oppure apri `index.html` nel browser (doppio click) e premi **GIOCA ORA**.
 - **Missioni 🎯** — obiettivi rotanti nell'HUD (3 peluche, 2 gemme, combo x3, 2 orsetti…) con ricompensa.
 - **Combo / streak** — prese consecutive moltiplicano i gettoni: bonus `1 + (streak-1) × 0.5`.
 - **XP e livelli** — ogni premio dà XP (le gemme ×3); al level-up si ricevono **+5 gettoni**.
-- **Cabinato sempre ricolmo** — 26 premi a caricamento, refill a 22 a ogni round, respawn continuo sotto 20.
+- **Cabinato sempre ricolmo** — 55 premi a caricamento, refill a 50 a ogni round, respawn continuo sotto 45.
 
 ## 🎥 Camera dinamica
 
@@ -77,6 +77,8 @@ Progressi salvati in `localStorage` con chiave **`daprod_claw_v1`**: gettoni, li
 ```
 DaProd-ClawMachine/
 ├── index.html    # gioco completo (HTML + CSS + JS)
+├── tests/        # test Node degli invarianti del ciclo partita
+├── package.json  # runner test nativo Node
 ├── README.md
 └── .gitignore
 ```

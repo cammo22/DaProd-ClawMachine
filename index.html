@@ -86,13 +86,26 @@
 <script type="module">
 
 let THREE;
-window.addEventListener('error',e=>{
+function showFatalError(title,detail){
   const el=document.getElementById('startScreen')||document.body;
-  el.innerHTML='<h1 style="color:#ff4d4d">⚠️ Errore</h1><p style="font-family:monospace;white-space:pre-wrap">'+(e.message||e.error)+'<br>'+ (e.filename||'')+':'+(e.lineno||'')+'</p>';
+  el.style.display='flex';
+  el.innerHTML='<h1 style="color:#ff4d4d">'+title+'</h1><p style="font-family:monospace;white-space:pre-wrap">'+detail+'</p>';
+}
+window.addEventListener('error',e=>{
+  if(typeof recoverGame==='function'&&typeof G!=='undefined'){
+    console.error(e.error||e.message);
+    recoverGame('⚙️ Errore recuperato: puoi continuare a giocare');
+    return;
+  }
+  showFatalError('⚠️ Errore',(e.message||e.error)+'<br>'+ (e.filename||'')+':'+(e.lineno||''));
 });
 window.addEventListener('unhandledrejection',e=>{
-  const el=document.getElementById('startScreen')||document.body;
-  el.innerHTML='<h1 style="color:#ff4d4d">⚠️ Errore caricamento</h1><p style="font-family:monospace;white-space:pre-wrap">'+(e.reason&&e.reason.message||e.reason)+'</p>';
+  if(typeof recoverGame==='function'&&typeof G!=='undefined'){
+    console.error(e.reason);
+    recoverGame('⚙️ Errore recuperato: puoi continuare a giocare');
+    return;
+  }
+  showFatalError('⚠️ Errore caricamento',e.reason&&e.reason.message||e.reason);
 });
 try{ THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js'); }
 catch(e1){
@@ -376,13 +389,20 @@ const fingers=[];
 const fingerGeo=new THREE.CylinderGeometry(.035,.065,1.15,8);
 for(let i=0;i<9;i++){                                   // 9 DENTI = gabbia vera
   const pivot=new THREE.Group(), a=i/9*Math.PI*2;
-  const f=new THREE.Mesh(fingerGeo,new THREE.MeshStandardMaterial({color:i%2?0xffd23e:0xef9c00,metalness:.9,roughness:.3}));
+  const mat=new THREE.MeshStandardMaterial({color:i%2?0xffd23e:0xef9c00,metalness:.9,roughness:.3});
+  const f=new THREE.Mesh(fingerGeo,mat);
   f.castShadow=true; f.position.y=-.575;
-  f.scale.y=i%2?1:.86;                                  // denti alterni = ben definiti
+  f.scale.y=i%2?1:.86;
+  const tip=new THREE.Group();
+  const tipMesh=new THREE.Mesh(new THREE.CylinderGeometry(.03,.055,.62,8),mat);
+  tipMesh.castShadow=true; tipMesh.position.y=-.31; tip.add(tipMesh);
+  tip.position.y=-1.05;
+  f.add(tip);
   pivot.add(f);
   pivot.position.set(Math.cos(a)*.3,0,Math.sin(a)*.3);
   pivot.userData.dir=a; pivot.userData.idx=i;
   pivot.userData.tan=new THREE.Vector3(-Math.sin(a),0,Math.cos(a)); // asse tangente: chiude verso l'interno
+  pivot.userData.tip=tip;
   pinch.add(pivot); fingers.push(pivot);
 }
 function applyFingers(v,wob,tt){ // 0 aperto → 1 chiuso: curva profonda + onda + tremolio
@@ -391,6 +411,7 @@ function applyFingers(v,wob,tt){ // 0 aperto → 1 chiuso: curva profonda + onda
              +(wob?Math.sin((tt||0)*6+idx*.9)*.07:0);            // tremolio vivo per dente
     p.setRotationFromAxisAngle(p.userData.tan, -eff*1.4);        // PIEGA FORTE: si chiudono su loro stessi
     p.position.y=-eff*.1;                                        // gancio: scendono anche verso il basso
+    p.userData.tip.rotation.x=-eff*1.2;                          // seconda articolazione: uncino credibile
   });
 }
 
@@ -464,7 +485,7 @@ const G={
   phase:'idle',      // idle | down | grab | lift | carry | fall | back
   t:0, timeLeft:0, running:false,
   streak:0, caught:null, fall:null, legLen:1, closeAmt:0,
-  shake:0, intro:0, fovKick:0
+  shake:0, intro:0, fovKick:0, tokenCharged:false, endNotice:false
 };
 const target={x:0,z:.4};
 const CLAW_LIMIT={minX:-3.0,maxX:3.0,minZ:-2.0,maxZ:2.3};
@@ -516,6 +537,37 @@ function addXP(n){
 }
 function spend(n){ if(S.credits<n) return false; S.credits-=n; save(); updateHUD(); return true; }
 
+function releaseHeldPrize(){
+  if(!G.caught) return;
+  const b=G.caught.userData.body;
+  if(b){
+    b.type=CANNON.Body.DYNAMIC;
+    b.velocity.set(0,1.2,0);
+    b.angularVelocity.set(0,0,0);
+    b.wakeUp&&b.wakeUp();
+  }
+  G.caught.userData.held=false;
+  G.caught=null;
+}
+
+function recoverGame(message){
+  releaseHeldPrize();
+  if(G.fall){
+    const fb=G.fall.userData.body;
+    if(fb&&world) world.removeBody(fb);
+    scene.remove(G.fall);
+    const fi=prizes.indexOf(G.fall);
+    if(fi>=0) prizes.splice(fi,1);
+    G.fall=null;
+  }
+  G.phase='idle'; G.t=0; G.legLen=1; G.closeAmt=0; G.endNotice=false;
+  G.running=false; G.tokenCharged=false;
+  leg.scale.y=1; leg.position.y=-.8; pinch.position.y=-1.35;
+  document.getElementById('dropBtn').disabled=false;
+  document.getElementById('timer').textContent='--';
+  toast(message,true); updateHUD();
+}
+
 /* ================= CONTROLLI ================= */
 let moveTouch=null;
 addEventListener('keydown',e=>{
@@ -545,7 +597,8 @@ function startRound(){
     setTimeout(()=>bb.style.transform='',600);
     return false;
   }
-  S.credits-=1; save();                          // gettone consumato UNA volta, solo qui
+  if(G.tokenCharged) return false;
+  S.credits-=1; G.tokenCharged=true; save();     // transazione idempotente: una partita = un gettone
   G.running=true; G.timeLeft=gameTime();
   G.phase='idle'; G.intro=1.6;
   while(prizeCount()<50) spawnPrize();          // il cabinato si RICOLMA a ogni round
@@ -563,8 +616,11 @@ function doDrop(){
 }
 function finishRound(){
   G.running=false;
+  G.endNotice=true;
   document.getElementById('dropBtn').disabled=(G.phase!=='idle');
   if(G.phase==='idle'){
+    G.tokenCharged=false;
+    G.endNotice=false;
     document.getElementById('timer').textContent='--';
     toast('⏰ ROUND FINITO — premi DISCI per giocare!');
   }
@@ -802,7 +858,11 @@ function animate(){
     G.closeAmt=Math.max(0,G.closeAmt-dt*1.5);
     if(G.t>1.2){
       G.phase='idle'; document.getElementById('dropBtn').disabled=false;
-      if(!G.running){ document.getElementById('timer').textContent='--'; toast('⏰ ROUND FINITO — premi DISCI per giocare!'); }
+      if(!G.running||G.endNotice){
+        G.tokenCharged=false; G.endNotice=false;
+        document.getElementById('timer').textContent='--';
+        toast('⏰ ROUND FINITO — premi GIOCA per giocare ancora!');
+      }
     }
   }
 
@@ -810,14 +870,8 @@ function animate(){
   if(G._ph!==G.phase){ G._ph=G.phase; G._phT=0; }
   G._phT=(G._phT||0)+dt;
   if(G.phase!=='idle'&&G._phT>12){
-    if(G.caught){ const b=G.caught.userData.body; if(b){ b.type=CANNON.Body.DYNAMIC; b.wakeUp&&b.wakeUp(); } G.caught.userData.held=false; G.caught=null; }
-    if(G.fall){ const fb=G.fall.userData.body; if(fb&&world) world.removeBody(fb); scene.remove(G.fall); const fi=prizes.indexOf(G.fall); if(fi>=0) prizes.splice(fi,1); G.fall=null; }
-    G.closeAmt=0; G.legLen=1;
-    leg.scale.y=1; leg.position.y=-.8; pinch.position.y=-1.35;
-    G.phase='idle'; G._phT=0;
-    document.getElementById('dropBtn').disabled=false;
-    SFX.fail(); toast('⚙️ Autorestart — si continua a giocare!');
-    updateHUD();
+    recoverGame('⚙️ Autorestart — si continua a giocare!');
+    SFX.fail();
   }
 
   // reticolo di mira: segue il braccio, mostra il raggio di presa
@@ -973,4 +1027,3 @@ animate();
 </script>
 </body>
 </html>
-

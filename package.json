@@ -1,0 +1,8 @@
+{
+  "name": "daprod-claw-machine",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}
