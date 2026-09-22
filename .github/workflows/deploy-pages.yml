@@ -2,8 +2,7 @@ name: Deploy arcade to GitHub Pages
 
 on:
   push:
-    branches:
-      - cammo22-cabinet-hud-integration
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -17,8 +16,9 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/main'
     environment:
-      name: github-pages-cabinet
+      name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:

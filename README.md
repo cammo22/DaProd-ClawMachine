@@ -12,6 +12,18 @@ Oppure apri `index.html` nel browser (doppio click) e premi **GIOCA ORA**.
 
 > Serve la connessione internet solo per scaricare Three.js da CDN (jsDelivr, con fallback automatico su unpkg).
 
+### Pubblicazione GitHub Pages
+
+Il workflow di GitHub Pages pubblica esclusivamente dal branch `main`, perché GitHub
+rifiuta i deployment Pages avviati da branch feature. Il flusso è quindi:
+
+1. Sviluppa e verifica le modifiche sul branch di lavoro.
+2. Fai merge della pull request in `main`.
+3. Il push su `main` avvia automaticamente il workflow `Deploy arcade to GitHub Pages`.
+
+Un avvio manuale del workflow da un branch diverso da `main` viene saltato
+intenzionalmente e non pubblica una preview.
+
 ### Controlli
 
 | Azione | Desktop | Mobile |
