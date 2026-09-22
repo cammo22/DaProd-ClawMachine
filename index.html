@@ -1280,7 +1280,7 @@ function animate(){
     // pinza VIVA: vortice e "masticazione" delle dita
     if(G.phase==='idle'){
       pinch.rotation.y+=dt*(G.running?.9:1.8);           // vortice più naturale
-      G.closeAmt=.2+Math.sin(t*3.2)*.16;
+      G.closeTarget=G.running?(.18+Math.sin(t*3.2)*.13):0;   // "respiro" delle dita (target, non forzato)
     } else if(G.phase==='down'||G.phase==='lift'){
       pinch.rotation.y+=dt*.3;                             // leggero moto (non strano)
     }
@@ -1320,10 +1320,11 @@ function animate(){
     G.shake=Math.max(G.shake,.035);               // vibrazione sottile durante lo scatto
     if(!G.snapDone&&G.closeAmt>=.97){ G.snapDone=true; SFX.clank(); }
     if(G.t>.22){
-      const c=claw.position, mr=magnetR();
+      const c=claw.position, mr=magnetR(), py0=pinchY();
       let best=null,bd=1e9;
       prizes.forEach(p=>{
         if(p.userData.held||p.userData.released) return;
+        if(Math.abs(p.position.y-py0)>1.0) return;        // deve essere VICINO anche in altezza (niente prese dall'alto)
         const d=Math.hypot(p.position.x-c.x,p.position.z-c.z);
         if(d<bd){ bd=d; best=p; }
       });
