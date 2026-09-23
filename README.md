@@ -16,19 +16,45 @@ Oppure apri `index.html` nel browser (doppio click) e premi **GIOCA ORA**.
 
 | Azione | Desktop | Mobile |
 |---|---|---|
+| Inserisci la moneta (100₤) | Pulsante **INSERISCI MONETA** o `Invio` | Pulsante dorato **INSERISCI MONETA** |
 | Muovi il braccio | Frecce / `W A S D` | Trascina il dito sul campo |
-| Discendi e afferra | `Spazio` / `Invio` oppure il grande **tasto rosso** | Grande **tasto rosso** |
+| Fai scendere il braccio | **DISCI ↓** | **DISCI ↓** |
+| Tira su (risalita a pagamento) | **SU ⬆** o `Spazio` | **SU ⬆** |
+| Borsa / Negozio / Audio | 🎒 · 🛒 · 🔊 | 🎒 · 🛒 · 🔊 |
+
+## 💰 Economia in LIRE ITALIANE ₤
+
+Conversione reale: **1 € = 1.936,27 ₤**. Ogni importo è mostrato anche in euro (HUD, display 3D, negozio, borsa).
+
+| Voce | Costo | Note |
+|---|---|---|
+| 1 partita | **100 ₤** | inserita la moneta parte il timer da **2:00** |
+| 1ª risalita | **200 ₤** | |
+| 2ª risalita | **500 ₤** | |
+| 3ª risalita | **1.000 ₤** | 🔒 si sblocca nello shop con la **Chiave 1000₤** |
+
+- **Massimo 2 risalite a partita** (3 con la Chiave): esaurite → **GAME OVER**. Anche il tempo scaduto è game over.
+- **Le lire non si mangiano mai**: l'addebito avviene *solo* se l'azione parte davvero. Se il saldo non basta, la risalita è **gratis** con un avviso; il watchdog rimborsa automaticamente l'ultima risalita in caso di blocco; se scendi sotto 100₤ ricevi **+500₤ gratis** ogni 45s.
+- **Pulsante moneta animato**: la moneta 3D vola e si infila nella fessura, che si illumina; ogni importo è convertito in euro reali.
 
 ## 🎮 Meccaniche
 
-- **Round a tempo** — 25 secondi base (+5/livello *Più tempo*); il primo tocco del tasto rosso avvia il round.
-- **Fisica vera (cannon-es)** — i premi cadono dall'alto, si impilano e rotolano; la pinza che scende li **spinge**; il premio trattenuto può **scivolare dalle dita** (le gemme scivolano ~5× più dei peluche; *Presa forte* riduce il rischio). La caduta nel buco è governata dalla fisica.
+- **Round a tempo** — **120 secondi** (+15s per livello *Più tempo*). Il tempo scorre solo dopo aver inserito la moneta.
+- **Scala: la prima discesa è inclusa nei 100₤**; ogni volta che il braccio risale paghi la tariffa crescente (200 → 500 → 1000₤).
+- **Fisica vera (cannon-es)** — i premi cadono dall'alto, si impilano e rotolano; la pinza che scende li **spinge**; il premio trattenuto può **scivolare dalle dita** (le gemme ~5× più dei peluche; *Presa forte* riduce il rischio). La caduta nel buco è governata dalla fisica.
+- **Dita articolate a 2 falangi** — base + **nocca**: si spalancano e poi si **piegano su loro stesse** fino a chiudersi *fino al premio* (l'ampiezza finale dipende dal raggio del premio). Nessun rallentatore: lo scatto è in tempo reale, rapido e mai bloccante.
 - **Presa a probabilità** — `gripChance()` parte dal 42% (+18% sui peluche), ×0.55 sulle gemme, più difficile con campo pieno.
-- **Calamita** — il premio più vicino entro il raggio di presa è il candidato; il raggio cresce con l'upgrade (reticolo di mira sul pavimento).
-- **Missioni 🎯** — obiettivi rotanti nell'HUD (3 peluche, 2 gemme, combo x3, 2 orsetti…) con ricompensa.
-- **Combo / streak** — prese consecutive moltiplicano i gettoni: bonus `1 + (streak-1) × 0.5`.
-- **XP e livelli** — ogni premio dà XP (le gemme ×3); al level-up si ricevono **+5 gettoni**.
-- **Cabinato sempre ricolmo** — 26 premi a caricamento, refill a 22 a ogni round, respawn continuo sotto 20.
+- **Calamita** — il premio più vicino entro il raggio di presa è il candidato (reticolo di mira sul pavimento).
+- **Missioni 🎯** — obiettivi rotanti nell'HUD con ricompensa in lire.
+- **Combo / streak** — prese consecutive moltiplicano il valore: bonus `1 + (streak-1) × 0.5`.
+- **XP e livelli** — ogni premio dà XP (le gemme ×3); al level-up **+500₤**.
+- **Cabinato sempre ricolmo** — respawn continuo, pulizia automatica dei premi finiti nel buco.
+
+## 🥤 Bicchierone dei premi + 🎒 Borsa infinita
+
+- **Bicchierone 3D** montato sul cabinato: ogni premio vinto ci **cade dentro**, si assesta nella pila e fa **ondeggiare gli altri** (scossone + luci). La targa 🏆 mostra il totale. Pila visibile fino a 24 pezzi (i più vecchi escono per non pesare).
+- **Borsa infinita** 🎒: tutti gli item raccolti **per sempre**, con quantità, valore in lire ed euro, premi in carriera e combo record. Il totale è salvato.
+- **Display LED 3D incorporato** nel pannello frontale del cabinato: saldo ₤ + euro, timer grande e risalite rimaste. L'HUD in alto è un **marquee arcade** con display LED, viti e pip delle risalite.
 
 ## 🎥 Camera dinamica
 
@@ -38,31 +64,38 @@ Oppure apri `index.html` nel browser (doppio click) e premi **GIOCA ORA**.
 
 ## 🏆 Premi
 
+Il valore è in lire; con la combo il guadagno si moltiplica.
+
 | Premio | Valore | Peso spawn | Tipo |
 |---|---|---|---|
-| 🧸 Orsetto | 1 | 30 | plush |
-| 🐰 Coniglietto | 1 | 18 | plush |
-| 🐸 Rana | 1 | 14 | plush |
-| 🐧 Pinguino | 2 | 10 | plush |
-| 💎 Gemma | 5 | 8 | gemma |
-| 💠 Diamante | 10 | 4 | gemma |
+| 🧸 Orsetto | 100 ₤ | 30 | plush |
+| 🐰 Coniglietto | 100 ₤ | 18 | plush |
+| 🐸 Rana | 100 ₤ | 14 | plush |
+| 🐧 Pinguino | 200 ₤ | 10 | plush |
+| ⭐ Stella | 300 ₤ | 9 | plush |
+| ❤️ Cuore | 200 ₤ | 12 | plush |
+| 💎 Gemma | 500 ₤ | 8 | gemma |
+| 👑 Corona | 800 ₤ | 3 | plush |
+| 💠 Diamante | 1.000 ₤ | 4 | gemma |
 
-I plush sono **sprite emoji** grandi e sempre inquadrati; le gemme sono ottaedri emissivi. Pannelli del cabinet in **MeshPhysicalMaterial** con `transmission` + IOR + clearcoat: **vetro vero**, si vede attraverso con riflessi. Sala arcade di sfondo con cabinati fantasma, tubi neon a soffitto, griglia al neon, polvere sospesa e banner *DaProd ARCADE*.
+**Modelli 3D veri, non sprite**: ogni peluche è costruito proceduralmente (capsule, sfere, orecchie, musi, arti e occhi) e **fuso in un'unica mesh indicizzata con vertex colors**; le gemme sono sfaccettate con `transmission` + IOR; stella, cuore e corona sono **estruse con bordo arrotondato**. Materiali PBR con **env map procedurale** e tone mapping **ACES**: niente effetto "plastica piatta". Pannelli del cabinet in **MeshPhysicalMaterial** con `transmission`: **vetro vero**, si vede attraverso con riflessi.
 
 ## 🛒 Negozio
 
-4 potenziamenti, 5 livelli ciascuno. Costo = `base + livello × 4`.
+Costo = `base + livello × 400 ₤`. La **Chiave 1000₤** è singola (sblocca la 3ª risalita).
 
 | Upgrade | Effetto per livello | Costo base |
 |---|---|---|
-| 🦾 Presa forte | +7% probabilità di presa (max 92%) | 8 |
-| ⏱️ Più tempo | +5 secondi a partita | 6 |
-| 🧲 Calamita | +0.35 raggio di presa | 10 |
-| 🍀 Fortuna | +0.4 moltiplicatore sulle gemme | 12 |
+| 🦾 Presa forte | +7% probabilità di presa (max 92%) | 800 ₤ |
+| ⏱️ Più tempo | +15 secondi a partita | 600 ₤ |
+| 🧲 Calamita | +0.35 raggio di presa | 1.000 ₤ |
+| 🍀 Fortuna | +0.4 moltiplicatore sulle gemme | 1.200 ₤ |
+| 🔑 Chiave 1000₤ | sblocca la **3ª risalita** (una tantum) | 2.500 ₤ |
+| 💰 Mano lesta | -10% costo delle risalite (max -50%) | 1.500 ₤ |
 
 ## 💾 Salvataggio
 
-Progressi salvati in `localStorage` con chiave **`daprod_claw_v1`**: gettoni, livello, XP, potenziamenti, stato audio, combo record, premi totali e **stato missioni**. Il bonus 🎁 ricarica **+10 gettoni** ogni 60 secondi.
+Progressi in `localStorage` con chiave **`daprod_claw_v2`**: lire, livello, XP, potenziamenti, stato audio, combo record, premi totali, **stato missioni** e **borsa infinita** (tutti gli item raccolti). I salvataggi della **v1 vengono migrati automaticamente** (gettoni → lire ×100). Il bonus 🎁 ricarica **+1.000 ₤** ogni 60 secondi.
 
 ## 🛠️ Stack tecnico
 

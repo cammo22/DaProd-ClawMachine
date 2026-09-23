@@ -9,15 +9,58 @@
   html,body{width:100%;height:100%;overflow:hidden;background:#0a0618;font-family:'Segoe UI',system-ui,sans-serif;color:#fff;touch-action:none}
   #game{position:fixed;inset:0}
   canvas{display:block}
-  /* HUD */
-  #hud{position:fixed;top:10px;left:10px;right:10px;display:flex;gap:8px;flex-wrap:wrap;z-index:10;pointer-events:none}
-  .chip{background:rgba(10,8,30,.75);border:1px solid #ff2d7866;border-radius:12px;padding:6px 12px;font-weight:700;font-size:15px;backdrop-filter:blur(4px)}
-  .chip small{opacity:.7;font-weight:400}
-  #timer{color:#ffd23e;min-width:64px;text-align:center}
-  #timer.low{color:#ff4d4d;animation:blink .5s infinite}
-  @keyframes blink{50%{opacity:.4}}
+  /* ===== HUD INCORPORATO SUL CABINATO: marquee arcade con display LED ===== */
+  #hud{position:fixed;top:0;left:0;right:0;z-index:10;pointer-events:none;
+    display:flex;gap:8px;align-items:stretch;justify-content:center;flex-wrap:wrap;padding:8px 10px 9px;
+    background:linear-gradient(180deg,#33206b 0%,#1d1145 48%,#0c0620 100%);
+    border-bottom:3px solid #ff2d78;box-shadow:0 8px 26px #000b,inset 0 0 26px #ff2d7833}
+  #hud .rivet{width:9px;height:9px;border-radius:50%;align-self:center;
+    background:radial-gradient(circle at 32% 28%,#fff,#b9a6e8 45%,#4a3a86);box-shadow:0 1px 2px #000a}
+  .led{position:relative;background:#07040e;border:2px solid #3d2c78;border-radius:10px;
+    padding:5px 11px;min-width:72px;text-align:center;
+    box-shadow:inset 0 0 16px #000,0 2px 0 #ffffff14,0 0 0 1px #00000066}
+  .led b{display:block;font-family:'Consolas','Courier New',monospace;font-size:19px;line-height:1.05;
+    color:#ffd23e;text-shadow:0 0 10px #ffd23eaa,0 0 24px #ff9a0055;letter-spacing:1px}
+  .led i{display:block;font-style:normal;font-size:9px;letter-spacing:1.5px;color:#8f7fd0;
+    text-transform:uppercase;margin-top:3px;font-weight:700}
+  .led.pink b{color:#ff5c9a;text-shadow:0 0 10px #ff2d78bb}
+  .led.cyan b{color:#7fe9ff;text-shadow:0 0 10px #22ccffbb}
+  .led.green b{color:#7dff9a;text-shadow:0 0 10px #31d158bb}
+  .led small{display:block;font-size:9.5px;color:#6f5fb0;margin-top:1px}
+  #timer.low b{color:#ff4d4d;text-shadow:0 0 16px #ff4d4d;animation:blink .5s infinite}
+  @keyframes blink{50%{opacity:.35}}
+  /* pip delle 3 risalite */
+  #raisePips{display:flex;gap:5px;justify-content:center;margin-top:4px}
+  .pip{width:13px;height:13px;border-radius:50%;background:#160f2e;border:1px solid #4a3a86;box-shadow:inset 0 0 6px #000}
+  .pip.on{background:radial-gradient(circle at 34% 28%,#fff3ab,#ffb300 55%,#a35c00);border-color:#ffd23e;box-shadow:0 0 11px #ffb300dd}
+  .pip.used{background:#33101f;border-color:#63203a;box-shadow:inset 0 0 7px #000}
+  .pip.lock{background:#160f2e;border-color:#33265c;opacity:.45}
   /* bottom bar */
-  #bottomBar{position:fixed;bottom:14px;left:0;right:0;display:flex;justify-content:center;align-items:flex-end;gap:14px;z-index:10}
+  #bottomBar{position:fixed;bottom:12px;left:0;right:0;display:flex;justify-content:center;align-items:flex-end;gap:11px;z-index:10}
+  /* PULSANTE MONETA ANIMATO (oro, con riflesso che scorre) */
+  #coinBtn{position:relative;width:112px;height:112px;border-radius:50%;border:none;cursor:pointer;overflow:hidden;
+    background:radial-gradient(circle at 34% 27%,#fff8d4,#ffd23e 36%,#e08a00 72%,#7d4500);
+    box-shadow:0 0 28px #ffd23e99,0 7px 0 #63370a,inset 0 2px 8px #ffffffaa,inset 0 -7px 14px #00000055;
+    color:#4a2600;font-weight:900;font-size:13px;line-height:1.2;letter-spacing:.3px;text-shadow:0 1px 0 #ffe9a8}
+  #coinBtn span{position:relative;z-index:2;display:block}
+  #coinBtn:after{content:'';position:absolute;top:-60%;left:-75%;width:55%;height:220%;transform:rotate(20deg);
+    background:linear-gradient(90deg,transparent,#ffffffdd,transparent);animation:shine 2.7s infinite}
+  @keyframes shine{0%{left:-75%}52%{left:135%}100%{left:135%}}
+  #coinBtn:active{transform:translateY(5px);box-shadow:0 0 18px #ffd23e99,0 2px 0 #63370a}
+  #coinBtn:disabled{filter:grayscale(.75);opacity:.5}
+  #coinBtn.inserting{animation:coinIn .6s cubic-bezier(.4,0,.2,1)}
+  @keyframes coinIn{0%{transform:scale(1)}30%{transform:scale(.88) rotate(-7deg)}
+    62%{transform:scale(.68) translateY(18px) rotate(4deg);filter:brightness(1.5)}100%{transform:scale(1)}}
+  /* PULSANTE RISALITA (compare durante la discesa) */
+  #raiseBtn{width:96px;height:96px;border-radius:50%;border:none;cursor:pointer;
+    background:radial-gradient(circle at 34% 28%,#c4f4ff,#22ccff 52%,#0a6a8f);
+    box-shadow:0 0 26px #22ccffbb,0 6px 0 #063c52,inset 0 2px 7px #ffffffaa;
+    font-size:14px;font-weight:900;color:#04222e;line-height:1.2;text-shadow:0 1px 0 #c9f5ff}
+  #raiseBtn:active{transform:translateY(4px);box-shadow:0 0 16px #22ccffbb,0 2px 0 #063c52}
+  #raiseBtn.hidden{display:none}
+  #raiseBtn.pulse{animation:rpulse .8s infinite}
+  @keyframes rpulse{50%{box-shadow:0 0 40px #22ccff,0 6px 0 #063c52,inset 0 2px 7px #ffffffaa}}
+  #coinBtn.hidden,#dropBtn.hidden,#raiseBtn.hidden{display:none}
   .sideBtn{width:56px;height:56px;border-radius:50%;border:2px solid #ffffff33;background:rgba(20,14,50,.85);font-size:24px;cursor:pointer;color:#fff}
   .sideBtn:active{transform:scale(.92)}
   #dropBtn{width:104px;height:104px;border-radius:50%;border:none;cursor:pointer;
@@ -27,7 +70,7 @@
   #dropBtn:active{transform:translateY(4px);box-shadow:0 0 18px #ff2040aa,0 2px 0 #6d0012}
   #dropBtn:disabled{filter:grayscale(.7);opacity:.6}
   /* toasts */
-  #toasts{position:fixed;top:64px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:6px;z-index:20;pointer-events:none}
+  #toasts{position:fixed;top:104px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:6px;z-index:20;pointer-events:none}
   .toast{background:rgba(15,10,40,.9);border:1px solid #ffd23e88;color:#ffd23e;font-weight:800;padding:8px 18px;border-radius:20px;font-size:16px;animation:tin 2.2s forwards}
   .toast.big{font-size:22px;color:#ff2d78;border-color:#ff2d7888;text-shadow:0 0 12px #ff2d78}
   @keyframes tin{0%{transform:translateY(-12px) scale(.8);opacity:0}12%{transform:none;opacity:1}80%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
@@ -41,6 +84,26 @@
   .buy{background:linear-gradient(#31d158,#1d9c3c);border:none;color:#fff;font-weight:800;padding:7px 14px;border-radius:10px;cursor:pointer}
   .buy:disabled{background:#444;opacity:.6}
   .closeX{width:100%;margin-top:6px;background:#ff2d78;border:none;color:#fff;font-weight:900;padding:10px;border-radius:12px;font-size:16px;cursor:pointer}
+  /* ===== BORSA INFINITA 🎒 ===== */
+  #bag .panel{border-color:#ffd23e;box-shadow:0 0 44px #ffd23e55}
+  .bagGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+  .bagCell{background:#1e1447;border:1px solid #3d2c78;border-radius:12px;padding:8px 3px;text-align:center}
+  .bagCell .em{font-size:29px;display:block;filter:drop-shadow(0 3px 6px #000b)}
+  .bagCell .nm{font-size:9.5px;color:#cfc3ff;display:block;margin-top:3px;line-height:1.15}
+  .bagCell .qt{font-size:14px;font-weight:900;color:#ffd23e;display:block;margin-top:2px}
+  .bagCell.empty{opacity:.22;filter:grayscale(1)}
+  .bagSum{text-align:center;color:#9be7ff;font-size:13px;margin-bottom:10px;line-height:1.6}
+  /* ===== GAME OVER ===== */
+  #gameOver{position:fixed;inset:0;background:rgba(4,2,12,.9);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;z-index:36;gap:12px;text-align:center;padding:20px}
+  #gameOver.hidden{display:none}
+  #gameOver h2{font-size:clamp(32px,9vw,62px);color:#ff2d78;letter-spacing:5px;animation:gop 1.15s infinite}
+  @keyframes gop{0%,100%{text-shadow:0 0 26px #ff2d78aa;transform:scale(1)}50%{text-shadow:0 0 52px #ff2d78;transform:scale(1.05)}}
+  #goStats{color:#cfc3ff;font-size:15.5px;line-height:1.75}
+  #goStats b{color:#ffd23e}
+  #goAgain{background:linear-gradient(#ffd23e,#ff9a00);border:none;color:#3a1d00;font-size:19px;font-weight:900;
+    padding:13px 38px;border-radius:40px;cursor:pointer;box-shadow:0 0 30px #ffd23e88}
+  #goAgain:active{transform:scale(.95)}
   /* start screen */
   #startScreen{position:fixed;inset:0;background:radial-gradient(circle at 50% 30%,#2a1150,#0a0618 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:40;gap:14px;text-align:center;padding:20px}
   #startScreen h1{font-size:clamp(30px,7vw,54px);color:#ff2d78;text-shadow:0 0 24px #ff2d78aa;letter-spacing:2px}
@@ -53,34 +116,57 @@
 <body>
 <div id="game"></div>
 <div id="hud">
-  <div class="chip">🪙 <span id="credits">0</span> <small>gettoni</small></div>
-  <div class="chip" id="timer">--</div>
-  <div class="chip">🔥 <span id="streak">0</span> <small>combo</small></div>
-  <div class="chip">⭐ Liv <span id="level">1</span></div>
-  <div class="chip">🧸 <span id="prizes">0</span> <small>in gioco</small></div>
-  <div class="chip" id="mission">🎯 —</div>
+  <div class="rivet"></div>
+  <div class="led"><b><span id="credits">0</span>₤</b><i>lire</i><small id="euro">€ 0,00</small></div>
+  <div class="led" id="timer"><b>2:00</b><i>tempo</i></div>
+  <div class="led pink"><b id="raisesTxt">3</b><i>risalite</i>
+    <div id="raisePips"><span class="pip on"></span><span class="pip on"></span><span class="pip on"></span></div></div>
+  <div class="led cyan"><b>x<span id="streak">0</span></b><i>combo</i></div>
+  <div class="led green"><b>Lv<span id="level">1</span></b><i>livello</i></div>
+  <div class="led"><b id="prizes">0</b><i>premi</i></div>
+  <div class="led pink" id="mission"><b>—</b><i>missione</i></div>
+  <div class="rivet"></div>
 </div>
 <div id="toasts"></div>
 <div class="flash" id="flash"></div>
 <div id="bottomBar">
-  <button class="sideBtn" id="bonusBtn" title="Bonus gettoni">🎁</button>
-  <button id="dropBtn">DISCI<br>↓</button>
+  <button class="sideBtn" id="bonusBtn" title="Bonus lire gratis">🎁</button>
+  <button class="sideBtn" id="bagBtn" title="Borsa infinita">🎒</button>
+  <button id="coinBtn"><span>INSERISCI<br>MONETA<br>100₤</span></button>
+  <button id="dropBtn" class="hidden">DISCI<br>↓</button>
+  <button id="raiseBtn" class="hidden">SU ⬆<br><span id="raiseCost">200₤</span></button>
   <button class="sideBtn" id="shopBtn" title="Negozio">🛒</button>
   <button class="sideBtn" id="soundBtn" title="Audio">🔊</button>
+</div>
+<div id="bag" class="modal hidden">
+  <div class="panel">
+    <h2>🎒 BORSA INFINITA</h2>
+    <div class="bagSum" id="bagSum">—</div>
+    <div class="bagGrid" id="bagGrid"></div>
+    <button class="closeX" id="bagClose">CHIUDI</button>
+  </div>
+</div>
+<div id="gameOver" class="hidden">
+  <h2>GAME OVER</h2>
+  <div id="goStats">—</div>
+  <button id="goAgain">🪙 INSERISCI MONETA</button>
 </div>
 <div id="shop" class="modal hidden">
   <div class="panel">
     <h2>🛒 NEGOZIO</h2>
-    <div class="item"><span>🦾 <b>Presa forte</b><br><small>+7% probabilità presa</small></span><button class="buy" data-up="grip">🪙 8</button></div>
-    <div class="item"><span>⏱️ <b>Più tempo</b><br><small>+5 secondi a partita</small></span><button class="buy" data-up="time">🪙 6</button></div>
-    <div class="item"><span>🧲 <b>Calamita</b><br><small>raggio di presa più ampio</small></span><button class="buy" data-up="magnet">🪙 10</button></div>
-    <div class="item"><span>🍀 <b>Fortuna</b><br><small>più gemme e più valore</small></span><button class="buy" data-up="lucky">🪙 12</button></div>
+    <div class="item"><span>🦾 <b>Presa forte</b><br><small>+7% probabilità presa</small></span><button class="buy" data-up="grip">800₤</button></div>
+    <div class="item"><span>⏱️ <b>Più tempo</b><br><small>+15 secondi a partita</small></span><button class="buy" data-up="time">600₤</button></div>
+    <div class="item"><span>🧲 <b>Calamita</b><br><small>raggio di presa più ampio</small></span><button class="buy" data-up="magnet">1000₤</button></div>
+    <div class="item"><span>🍀 <b>Fortuna</b><br><small>più gemme e più valore</small></span><button class="buy" data-up="lucky">1200₤</button></div>
+    <div class="item"><span>🔑 <b>Chiave 1000₤</b><br><small>sblocca la 3ª risalita (1000₤)</small></span><button class="buy" data-up="key1000">2500₤</button></div>
+    <div class="item"><span>💰 <b>Mano lesta</b><br><small>-10% costo risalite (per livello)</small></span><button class="buy" data-up="discount">1500₤</button></div>
     <button class="closeX" id="shopClose">CHIUDI</button>
   </div>
 </div>
 <div id="startScreen">
   <h1>🦾 DaProd CLAW</h1>
-  <p>Muovi il braccio con le <b>frecce</b> o <b>trascinando il dito</b>, premi il <b>GRANDE TASTO ROSSO</b> e afferra i premi! 🧸💰💎 Combina prese di fila per bonus sempre più grossi!</p>
+  <p>🎰 <b>1 partita = 100₤</b> · ⏱️ <b>2 minuti</b> · 🦾 <b>2 risalite a pagamento</b> (200₤ · 500₤) — la <b>3ª da 1000₤</b> si sblocca nello shop con la Chiave 🔑.<br>
+  Inserisci la moneta, muovi il braccio con <b>frecce</b> o <b>trascinando il dito</b>, premi <b>DISCI ↓</b> e poi <b>SU ⬆</b> per tirare su: ogni premio finisce nel <b>bicchierone</b> 🥤 e nella <b>borsa infinita</b> 🎒. Esaurite le risalite → <b>GAME OVER</b>!</p>
   <button id="playBtn">▶ GIOCA ORA</button>
 </div>
 <script type="module">
@@ -129,40 +215,105 @@ const SFX={
 };
 
 /* ================= STATO + SALVATAGGIO ================= */
-const SAVE_KEY='daprod_claw_v1';
-const S={ credits:20, level:1, xp:0, up:{grip:0,time:0,magnet:0,lucky:0}, sound:true, best:0, totalWins:0 };
+const SAVE_KEY='daprod_claw_v2';
+const S={ lire:5000, level:1, xp:0, up:{grip:0,time:0,magnet:0,lucky:0,key1000:0,discount:0},
+          sound:true, best:0, totalWins:0, bag:{}, spent:0, mission:null };
 function save(){ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }
-function load(){ try{ const d=JSON.parse(localStorage.getItem(SAVE_KEY)); if(d) Object.assign(S,d,{up:Object.assign(S.up,d.up||{})}); }catch(e){} }
+function load(){
+  try{
+    const d=JSON.parse(localStorage.getItem(SAVE_KEY));
+    if(d){ Object.assign(S,d,{up:Object.assign({},S.up,d.up||{}),bag:Object.assign({},d.bag||{})}); }
+    else{                                    // MIGRAZIONE dal salvataggio v1 (gettoni → lire ×100)
+      const v1=JSON.parse(localStorage.getItem('daprod_claw_v1'));
+      if(v1){
+        S.lire=Math.max(1000,(v1.credits||0)*100); S.level=v1.level||1; S.xp=v1.xp||0;
+        S.best=v1.best||0; S.totalWins=v1.totalWins||0; S.sound=v1.sound!==false;
+        const u=v1.up||{}; S.up.grip=u.grip||0; S.up.time=u.time||0; S.up.magnet=u.magnet||0; S.up.lucky=u.lucky||0;
+        save();
+      }
+    }
+  }catch(e){}
+  if(!S.bag||typeof S.bag!=='object') S.bag={};
+  if(typeof S.lire!=='number'||!isFinite(S.lire)) S.lire=1000;   // mai senza soldi per un save corrotto
+}
 load();
 
-const GRIP_BASE=0.42, TIME_BASE=25, MAGNET_BASE=1.4, LUCKY_BASE=1.0;
-const gripChance=()=>Math.min(.92, GRIP_BASE + S.up.grip*.07);
-const gameTime =()=>TIME_BASE + S.up.time*5;
-const magnetR  =()=>MAGNET_BASE + S.up.magnet*.35;
-const luckyMul =()=>LUCKY_BASE + S.up.lucky*.4;
+/* ================= ECONOMIA IN LIRE ITALIANE ₤ ================= */
+const LIRE_PER_EURO=1936.27;                 // conversione ufficiale lire → euro
+const ROUND_COST=100;                        // una partita costa 100₤
+const RAISE_COST=[200,500,1000];             // 1ª / 2ª / 3ª risalita (la 3ª richiede la Chiave)
+const MAX_RAISES=3;                          // tetto assoluto (la 3ª richiede la Chiave 1000₤)
+const maxRaises=()=>2+((S.up.key1000||0)>=1?1:0);   // senza Chiave → solo 2 risalite
+const ROUND_TIME=120;                        // 2 MINUTI di timelapse
+const toEuro =l=>'€ '+(l/LIRE_PER_EURO).toFixed(2).replace('.',',');
+const fmtL   =l=>Math.round(l).toLocaleString('it-IT');
+const raiseUnlocked=i=> i<2 || (S.up.key1000||0)>=1;
+const raisePrice =i=>Math.round(RAISE_COST[i]*(1-Math.min(.5,(S.up.discount||0)*.10)));
+
+const gripChance=()=>Math.min(.92, 0.42 + (S.up.grip||0)*.07);
+const gameTime =()=>ROUND_TIME + (S.up.time||0)*15;
+const magnetR  =()=>1.4 + (S.up.magnet||0)*.35;
+const luckyMul =()=>1.0 + (S.up.lucky||0)*.4;
+/* denaro: addebito SOLO se l'azione parte davvero (mai lire mangiate) */
+function spendL(n){ if(S.lire<n) return false; S.lire-=n; S.spent=(S.spent||0)+n; save(); updateHUD(); return true; }
+function refundL(n,why){ if(!n) return; S.lire+=n; S.spent=Math.max(0,(S.spent||0)-n); save(); updateHUD();
+  if(why) toast('↩️ '+why+' → +'+fmtL(n)+'₤'); }
 
 /* ================= THREE SETUP ================= */
-const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+/* QUALITÀ: su telefoni/GPU deboli si abbassano geometrie e numero premi (mai lag) */
+const LOWQ=/Android|iPhone|iPad|Mobi/i.test(navigator.userAgent)||(navigator.hardwareConcurrency||8)<=4;
+const QUAL={seg:LOWQ?14:26, prizes:LOWQ?26:40, dpr:LOWQ?1.25:2};
+
+const renderer=new THREE.WebGLRenderer({antialias:!LOWQ,powerPreference:'high-performance'});
+renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,QUAL.dpr));
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;   // look cinematografico, non "plastica piatta"
+renderer.toneMappingExposure=1.08;
 document.getElementById('game').appendChild(renderer.domElement);
 
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x140a2e);
 /* niente fog: il cabinato deve SEMPRE vedersi bene */
 
+/* ---- ENVIRONMENT MAP procedurale (core three, nessun addon) ----
+   Dà riflessi PBR veri su metallo, vetro e gemme: è QUESTO che toglie l'effetto "Roblox". */
+function envTexture(){
+  const c=document.createElement('canvas'); c.width=512; c.height=256; const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,256);
+  g.addColorStop(0,'#2a1a55'); g.addColorStop(.45,'#4b2f8f'); g.addColorStop(.55,'#1b1140'); g.addColorStop(1,'#0a0618');
+  x.fillStyle=g; x.fillRect(0,0,512,256);
+  // sorgenti luminose "softbox" che si specchiano sui materiali
+  const spots=[[90,60,'#ff8fc0',70],[250,50,'#ffffff',90],[420,70,'#7fe3ff',70],[170,150,'#ffd98a',60],[360,170,'#c08cff',55]];
+  spots.forEach(([sx,sy,col,r])=>{
+    const rg=x.createRadialGradient(sx,sy,0,sx,sy,r);
+    rg.addColorStop(0,col); rg.addColorStop(1,'rgba(0,0,0,0)');
+    x.fillStyle=rg; x.beginPath(); x.arc(sx,sy,r,0,7); x.fill();
+  });
+  const t=new THREE.CanvasTexture(c);
+  t.mapping=THREE.EquirectangularReflectionMapping; t.colorSpace=THREE.SRGBColorSpace;
+  return t;
+}
+const _pmrem=new THREE.PMREMGenerator(renderer); _pmrem.compileEquirectangularShader();
+const ENV=_pmrem.fromEquirectangular(envTexture()).texture;
+scene.environment=ENV; _pmrem.dispose();
+
 const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.1,60);
 const camPos=new THREE.Vector3(0,5.8,11.5);
 camera.position.copy(camPos);
 const camLook=new THREE.Vector3(0,1.5,-.4);
 
-scene.add(new THREE.AmbientLight(0xffffff,1.15));
-scene.add(new THREE.HemisphereLight(0xaabbff,0x552266,1.1));
-const spot=new THREE.DirectionalLight(0xffffff,2.4);
+/* Luci: l'env map fa da riempimento, quindi l'ambient cala (altrimenti tutto slavato) */
+scene.add(new THREE.AmbientLight(0xffffff,.55));
+scene.add(new THREE.HemisphereLight(0xaabbff,0x552266,.85));
+const spot=new THREE.DirectionalLight(0xfff2e0,2.9);      // key light calda
 spot.position.set(4,10,5); spot.castShadow=true;
-spot.shadow.mapSize.set(1024,1024);
-Object.assign(spot.shadow.camera,{left:-8,right:8,top:8,bottom:-8});
+spot.shadow.mapSize.set(LOWQ?1024:2048,LOWQ?1024:2048);
+spot.shadow.bias=-0.0007; spot.shadow.normalBias=.022;     // niente acne/peter-panning
+Object.assign(spot.shadow.camera,{left:-8,right:8,top:8,bottom:-8,near:.5,far:30});
 scene.add(spot);
+const rim=new THREE.DirectionalLight(0x88ccff,.9);        // controluce: stacca i modelli dal fondale
+rim.position.set(-5,6,-7); scene.add(rim);
 const neon1=new THREE.PointLight(0xff2d78,100,30); neon1.position.set(-3,4.5,-1); scene.add(neon1);
 const neon2=new THREE.PointLight(0x22ccff,100,30); neon2.position.set(3,4.5,-1); scene.add(neon2);
 const neon3=new THREE.PointLight(0xffd23e,50,25); neon3.position.set(0,4.5,3.5); scene.add(neon3);
@@ -237,9 +388,34 @@ banner.position.set(0,7,-24); scene.add(banner);
   stool.position.set(x,-.55,z); stool.castShadow=true; scene.add(stool);
 });
 
+/* ---- BOX ARROTONDATO: spigoli smussati veri (ExtrudeGeometry + bevel), non cubi netti ---- */
+const _geoCache={};
+function roundedBoxGeo(w,h,d,r){
+  r=Math.min(r===undefined?.055:r, Math.min(w,h,d)*.45);
+  const key=[w,h,d,r].map(n=>n.toFixed(3)).join('|');
+  if(_geoCache[key]) return _geoCache[key];
+  const s=new THREE.Shape(), x=-w/2, y=-h/2, ww=w, hh=h;
+  s.moveTo(x+r,y);
+  s.lineTo(x+ww-r,y);   s.quadraticCurveTo(x+ww,y,   x+ww,y+r);
+  s.lineTo(x+ww,y+hh-r);s.quadraticCurveTo(x+ww,y+hh,x+ww-r,y+hh);
+  s.lineTo(x+r,y+hh);   s.quadraticCurveTo(x,y+hh,   x,y+hh-r);
+  s.lineTo(x,y+r);      s.quadraticCurveTo(x,y,      x+r,y);
+  const g=new THREE.ExtrudeGeometry(s,{depth:Math.max(.01,d-2*r),bevelEnabled:true,
+    bevelThickness:r,bevelSize:r,bevelOffset:0,bevelSegments:LOWQ?2:4,curveSegments:LOWQ?4:8,steps:1});
+  g.center(); g.computeVertexNormals();
+  _geoCache[key]=g; return g;
+}
+/* plastica arcade glossy con clearcoat: riflette l'env map = look "vero", non poligonale */
 function box(w,h,d,color,ex=.4){
-  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshStandardMaterial({color,roughness:.55,metalness:ex}));
+  const m=new THREE.Mesh(roundedBoxGeo(w,h,d),
+    new THREE.MeshPhysicalMaterial({color,roughness:.42,metalness:ex,
+      clearcoat:ex>.6?.2:.7, clearcoatRoughness:.18, envMapIntensity:1.1}));
   m.castShadow=m.receiveShadow=true; return m;
+}
+/* cromo/spazzolato per le parti meccaniche */
+function chrome(color,rough=.14){
+  return new THREE.MeshPhysicalMaterial({color,metalness:1,roughness:rough,
+    envMapIntensity:1.9, clearcoat:.4, clearcoatRoughness:.08});
 }
 
 /* ================= CABINATO ================= */
@@ -268,10 +444,15 @@ let CANNON=null;
 try{ CANNON=await import('https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js'); }
 catch(e1){ try{ CANNON=await import('https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js'); }catch(e2){ console.warn('fisica non disponibile',e2); } }
 const physOn=!!CANNON;
-let world=null;
+let world=null, PRIZE_PHYS=null, clawAnchor=null;
 if(physOn){
   world=new CANNON.World({gravity:new CANNON.Vec3(0,-32,0)});
   world.allowSleep=true;
+  world.broadphase=new CANNON.SAPBroadphase(world);        // O(n) invece di O(n²): pile di 40 premi stabili
+  world.broadphase.axisIndex=1;
+  if(world.solver&&world.solver.iterations) world.solver.iterations=14;   // pile che NON affondano
+  world.defaultContactMaterial.contactEquationStiffness=1e8;
+  world.defaultContactMaterial.contactEquationRelaxation=3;
   const wallMat=new CANNON.Material('w');
   const solid=(cx,cy,cz,hx,hy,hz)=>{
     const b=new CANNON.Body({mass:0,material:wallMat,
@@ -287,6 +468,41 @@ if(physOn){
   solid(0,3.75,-2.72,3.7,3.75,.1);         // fondale
   solid(-2.275,3.75,2.72,1.45,3.75,.1);    // frontale SX
   solid(2.275,3.75,2.72,1.45,3.75,.1);     // frontale DX (gap = buco premi)
+  /* materiali di contatto: i peluche "grippano" il pavimento, le gemme rimbalzano di più */
+  PRIZE_PHYS=new CANNON.Material('prize');
+  world.addContactMaterial(new CANNON.ContactMaterial(wallMat,PRIZE_PHYS,
+    {friction:.55,restitution:.18,contactEquationStiffness:1e8,contactEquationRelaxation:3}));
+  world.addContactMaterial(new CANNON.ContactMaterial(PRIZE_PHYS,PRIZE_PHYS,
+    {friction:.4,restitution:.12,contactEquationStiffness:1e8,contactEquationRelaxation:3}));
+  /* àncora cinematica della pinza: il premio si appende QUI con un vincolo → dondola davvero */
+  clawAnchor=new CANNON.Body({mass:0,type:CANNON.Body.KINEMATIC,shape:new CANNON.Sphere(.1)});
+  clawAnchor.collisionResponse=false;
+  clawAnchor.position.set(0,5,0);
+  world.addBody(clawAnchor);
+}
+/* ---- presa fisica: il premio segue la pinza restando APPESO (swing reale) ---- */
+function holdFollow(body,ud,py){
+  if(!body) return;
+  if(physOn&&clawAnchor&&ud.con){
+    clawAnchor.position.set(claw.position.x, py-.85+(ud.rad||.4), claw.position.z);
+    clawAnchor.velocity.set(0,0,0); clawAnchor.angularVelocity.set(0,0,0);
+    body.wakeUp();
+  } else {
+    body.position.set(claw.position.x,py-.85,claw.position.z);
+    body.velocity.set(0,0,0); body.angularVelocity.set(0,0,0);
+  }
+}
+function releaseHeld(mesh,slip){
+  const b=mesh.userData.body;
+  if(b){
+    if(mesh.userData.con&&world){ world.removeConstraint(mesh.userData.con); mesh.userData.con=null; }
+    if(b.type===CANNON.Body.KINEMATIC) b.type=CANNON.Body.DYNAMIC;
+    b.wakeUp();
+    const s=slip?3:.8;
+    b.velocity.set((Math.random()-.5)*s, slip?1.5:-2.5, (Math.random()-.5)*s);
+    b.angularVelocity.set((Math.random()-.5)*5,(Math.random()-.5)*5,(Math.random()-.5)*5);
+  }
+  mesh.userData.held=false;
 }
 function physSync(mesh,body){
   mesh.position.set(body.position.x,body.position.y,body.position.z);
@@ -363,6 +579,90 @@ stk.fillText('🎉 🎰 💰 🎁 ⭐ 🍀',512,150);
 const sticks=new THREE.Mesh(new THREE.PlaneGeometry(6,1.5),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(stickC),transparent:true}));
 sticks.position.set(0,2.6,-2.66); scene.add(sticks);
 
+/* ================= BICCHIERONE DEI PREMI VINTI 🥤 (borse infinita sul cabinato) ================= */
+const CUP={x:-3.5, y:1.6, z:3.25, R:.62, H:1.3};
+const cupGroup=new THREE.Group(); cupGroup.position.set(CUP.x,0,CUP.z); scene.add(cupGroup);
+const cupGlass=new THREE.Mesh(new THREE.CylinderGeometry(CUP.R,CUP.R*.78,CUP.H,40,1,true),
+  new THREE.MeshPhysicalMaterial({color:0xdff2ff,metalness:0,roughness:.06,transmission:.55,
+    thickness:.12,ior:1.45,transparent:true,opacity:.5,side:THREE.DoubleSide,clearcoat:1}));
+cupGlass.position.y=CUP.y+CUP.H/2; cupGroup.add(cupGlass);
+const cupBase=new THREE.Mesh(new THREE.CylinderGeometry(CUP.R*.78,CUP.R*.74,.14,40),chrome(0xffd23e,.32));
+cupBase.position.y=CUP.y+.07; cupBase.castShadow=true; cupGroup.add(cupBase);
+const cupRim=new THREE.Mesh(new THREE.TorusGeometry(CUP.R,.042,12,44),new THREE.MeshBasicMaterial({color:0xffd23e}));
+cupRim.rotation.x=Math.PI/2; cupRim.position.y=CUP.y+CUP.H; cupGroup.add(cupRim);
+const cupLight=new THREE.PointLight(0xffd23e,6,3.4); cupLight.position.set(0,CUP.y+.75,0); cupGroup.add(cupLight);
+const cupLblC=document.createElement('canvas'); cupLblC.width=512; cupLblC.height=128;
+const cupLbl=new THREE.Mesh(new THREE.PlaneGeometry(.92,.23),
+  new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cupLblC),transparent:true}));
+cupLbl.position.set(0,CUP.y+.55,CUP.R+.05); cupGroup.add(cupLbl);
+function drawCupLabel(n){
+  const x=cupLblC.getContext('2d'); x.clearRect(0,0,512,128);
+  x.font='900 66px Segoe UI'; x.textAlign='center'; x.textBaseline='middle';
+  x.shadowColor='#ffd23e'; x.shadowBlur=24; x.fillStyle='#ffe98a';
+  x.fillText('🏆 '+n,256,66);
+  cupLbl.material.map.needsUpdate=true;
+}
+drawCupLabel(0);
+const cupItems=[]; const CUP_MAX=24;                    // la pila visibile (la borsa è INFINITA)
+function cupSlot(i){
+  const lvl=Math.floor(i/6), k=i%6;
+  const a=k/6*Math.PI*2+lvl*.55, rad=lvl===0?.20:.33;
+  return new THREE.Vector3(Math.cos(a)*rad, CUP.y+.19+lvl*.29, Math.sin(a)*rad);
+}
+let cupShake=0;
+function addToCup(prize){
+  let m; try{ m=prizeModel(prize); }catch(e){ return; }
+  m.scale.setScalar(.62); m.rotation.y=Math.random()*Math.PI*2;
+  const slot=cupSlot(cupItems.length);
+  m.position.set(slot.x,slot.y+1.7,slot.z);            // arriva dall'alto e si assesta
+  cupGroup.add(m);
+  cupItems.push({mesh:m,slot,t:0,jiggle:1});
+  if(cupItems.length>CUP_MAX){ const old=cupItems.shift(); cupGroup.remove(old.mesh); }
+  cupItems.forEach(it=>it.jiggle=1);                   // la pila si muove quando ne arriva uno
+  cupShake=.55; drawCupLabel(bagTotal());
+}
+
+/* ================= FESSURA MONETA + MONETA 3D CHE SI INFILA 💰 ================= */
+const SLOT={x:2.75,y:1.02,z:4.12};
+const slotPlate=new THREE.Mesh(new THREE.BoxGeometry(.5,.2,.07),chrome(0x3a3a4d,.5));
+slotPlate.position.set(SLOT.x,SLOT.y,SLOT.z); slotPlate.castShadow=true; scene.add(slotPlate);
+const slotHole=new THREE.Mesh(new THREE.BoxGeometry(.32,.045,.02),new THREE.MeshBasicMaterial({color:0x000000}));
+slotHole.position.set(SLOT.x,SLOT.y,SLOT.z+.04); scene.add(slotHole);
+const slotGlow=new THREE.PointLight(0xffd23e,0,3); slotGlow.position.set(SLOT.x,SLOT.y,SLOT.z+.25); scene.add(slotGlow);
+const coinMesh=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,.035,26),chrome(0xffd23e,.4));
+coinMesh.visible=false; scene.add(coinMesh);
+let coinT=1;
+function coinInsertFX(){
+  coinT=0; coinMesh.visible=true;
+  coinMesh.position.set(SLOT.x+.95,SLOT.y+1.6,SLOT.z+1.5);
+  coinMesh.rotation.set(Math.PI/2,0,0);
+}
+
+/* ================= DISPLAY LED 3D INCORPORATO SUL CABINATO ================= */
+const dispC=document.createElement('canvas'); dispC.width=1024; dispC.height=256;
+const dispTex=new THREE.CanvasTexture(dispC); dispTex.colorSpace=THREE.SRGBColorSpace;
+const disp=new THREE.Mesh(new THREE.PlaneGeometry(4.5,1.12),new THREE.MeshBasicMaterial({map:dispTex}));
+disp.position.set(-.35,1.0,4.105); scene.add(disp);
+let dispAcc=0;
+function drawDisplay(){
+  const x=dispC.getContext('2d');
+  x.fillStyle='#07040e'; x.fillRect(0,0,1024,256);
+  x.strokeStyle='#3d2c78'; x.lineWidth=8; x.strokeRect(5,5,1014,246);
+  x.textAlign='left'; x.textBaseline='middle';
+  x.font='900 104px Consolas,monospace'; x.shadowColor='#ffd23e'; x.shadowBlur=26;
+  x.fillStyle='#ffd23e'; x.fillText(fmtL(S.lire)+'₤',44,84);
+  x.font='700 38px Consolas,monospace'; x.shadowBlur=10; x.fillStyle='#9be7ff';
+  x.fillText(toEuro(S.lire),46,166);
+  x.textAlign='right'; x.font='900 112px Consolas,monospace';
+  const ts=G.running?mmss(G.timeLeft):'--:--';
+  x.fillStyle=(G.running&&G.timeLeft<=10)?'#ff4d4d':'#7dff9a';
+  x.shadowColor=x.fillStyle; x.shadowBlur=26; x.fillText(ts,984,92);
+  x.font='700 34px Consolas,monospace'; x.shadowBlur=8; x.fillStyle='#8f7fd0';
+  x.fillText('RISALITE '+Math.max(0,maxRaises()-G.raises)+'/'+maxRaises(),982,182);
+  dispTex.needsUpdate=true;
+}
+// drawDisplay() si chiama dopo `const G` (più sotto): qui G non esiste ancora.
+
 /* ================= BRACCIO MECCANICO ================= */
 // binario FISSO sul tetto (non si muove col braccio)
 const railBeam=box(7.9,.2,.6,0x6655aa,.8); railBeam.position.set(0,7.05,0); scene.add(railBeam);
@@ -373,25 +673,37 @@ const cLight=new THREE.PointLight(0xff5599,20,7); cLight.position.set(0,-.5,0); 
 const leg=box(.22,1,.22,0xdddddd,.9); leg.position.y=-.8; claw.add(leg);
 const pinch=new THREE.Group(); pinch.position.y=-1.35; claw.add(pinch);
 const fingers=[];
-const fingerGeo=new THREE.CylinderGeometry(.035,.065,1.15,8);
-for(let i=0;i<9;i++){                                   // 9 DENTI = gabbia vera
-  const pivot=new THREE.Group(), a=i/9*Math.PI*2;
-  const f=new THREE.Mesh(fingerGeo,new THREE.MeshStandardMaterial({color:i%2?0xffd23e:0xef9c00,metalness:.9,roughness:.3}));
-  f.castShadow=true; f.position.y=-.575;
-  f.scale.y=i%2?1:.86;                                  // denti alterni = ben definiti
-  pivot.add(f);
-  pivot.position.set(Math.cos(a)*.3,0,Math.sin(a)*.3);
-  pivot.userData.dir=a; pivot.userData.idx=i;
-  pivot.userData.tan=new THREE.Vector3(-Math.sin(a),0,Math.cos(a)); // asse tangente: chiude verso l'interno
+/* DITA ARTICOLATE A DUE FALANGI: base + nocca → si PIEGANO SU LORO STESSE come una mano vera */
+const segUp=new THREE.CylinderGeometry(.030,.054,.52,14);   // falange (prox)
+const segFo=new THREE.CylinderGeometry(.026,.042,.46,14);   // falangina (dist)
+const tipGeo=new THREE.SphereGeometry(.058,14,10);          // polpastrello arrotondato
+const CH_A=chrome(0xffd23e,.1), CH_B=chrome(0xef9c00,.14);  // cromo vero (riflette l'env map)
+const N_F=9;
+for(let i=0;i<N_F;i++){
+  const a=i/N_F*Math.PI*2;
+  const pivot=new THREE.Group();                                        // SNODO 1 = base del dito
+  pivot.position.set(Math.cos(a)*.32,0,Math.sin(a)*.32);
+  const up=new THREE.Mesh(segUp,i%2?CH_A:CH_B); up.castShadow=true; up.position.y=-.26; pivot.add(up);
+  const knuckle=new THREE.Group(); knuckle.position.y=-.52; pivot.add(knuckle);   // SNODO 2 = nocca
+  const fo=new THREE.Mesh(segFo,i%2?CH_A:CH_B); fo.castShadow=true; fo.position.y=-.23; knuckle.add(fo);
+  const tip=new THREE.Mesh(tipGeo,i%2?CH_A:CH_B); tip.position.y=-.47; tip.scale.set(1,.8,1.3); knuckle.add(tip);
+  pivot.scale.setScalar(i%2?1:.9);                                      // dita alterne = gabbia definita
+  pivot.userData.idx=i; pivot.userData.dir=a; pivot.userData.knuckle=knuckle;
+  pivot.userData.tan=new THREE.Vector3(-Math.sin(a),0,Math.cos(a));     // asse di flessione (tangente)
   pinch.add(pivot); fingers.push(pivot);
 }
-function applyFingers(v,wob,tt){ // 0 aperto → 1 chiuso: curva profonda + onda + tremolio
-  fingers.forEach((p,idx)=>{
-    const eff=Math.max(0,Math.min(1,v*1.35-idx*.045))            // cascata: ogni dente ritarda
-             +(wob?Math.sin((tt||0)*6+idx*.9)*.07:0);            // tremolio vivo per dente
-    p.setRotationFromAxisAngle(p.userData.tan, -eff*1.4);        // PIEGA FORTE: si chiudono su loro stessi
-    p.position.y=-eff*.1;                                        // gancio: scendono anche verso il basso
-  });
+/* v: 0 = spalancato, 1 = chiuso a uncino. Due snodi → curl vero, non una rotazione rigida */
+function applyFingers(v,wob,tt){
+  const V=THREE.MathUtils.clamp(v||0,0,1);
+  for(let i=0;i<fingers.length;i++){
+    const p=fingers[i];
+    const lag=THREE.MathUtils.clamp(V*1.16-i*.018,0,1);                 // cascata: ogni dito parte un istante dopo
+    const trem=wob?Math.sin((tt||0)*7+i*1.1)*.032*(1-lag*.5):0;         // micro-tremolio meccanico
+    const e=lag*lag*(3-2*lag)+trem;                                     // smoothstep = piega morbida
+    p.setRotationFromAxisAngle(p.userData.tan, .34-e*.79);              // falange: da spalancata a dentro
+    p.userData.knuckle.setRotationFromAxisAngle(p.userData.tan, .16-e*1.01);  // nocca: CURL su se stessa
+    p.position.y=-e*.06;                                                // uncina anche verso il basso
+  }
 }
 
 /* ================= PREMI ================= */
@@ -418,20 +730,245 @@ function emojiTexture(e){
   x.fillText(e,128,150);
   return new THREE.CanvasTexture(c);
 }
+/* ================= MODELLI 3D REALI DEI PREMI =================
+   Niente sprite/emoji: ogni premio è un modello costruito con primitive lisce.
+   Tutte le parti vengono FUSE in una sola geometria con vertex colors
+   → 1 mesh e 1 draw call per premio, anche con 40 premi in campo. */
+const _prim={};
+const QM=LOWQ?.6:1;                       // moltiplicatore qualità geometrie
+/* segmenti scelti in base alla DIMENSIONE della parte: i dettagli piccoli costano pochissimo */
+function sph(r,seg){
+  const s=Math.max(6,Math.round((seg||(r>.3?18:(r>.15?13:9)))*QM));
+  const k='s'+r.toFixed(3)+'_'+s;
+  return _prim[k]||(_prim[k]=new THREE.SphereGeometry(r,s,Math.max(5,Math.round(s*.7))));
+}
+function cap(r,l){
+  const rs=Math.max(6,Math.round((r>.15?13:9)*QM)), cs=Math.max(2,Math.round((r>.15?3:2)*QM));
+  const k='c'+r.toFixed(3)+'_'+l.toFixed(3)+'_'+rs;
+  return _prim[k]||(_prim[k]=new THREE.CapsuleGeometry(r,l,cs,rs));
+}
+function cone(r,h,seg){ const s=Math.max(6,Math.round((seg||12)*QM)), k='k'+r.toFixed(3)+'_'+h.toFixed(3)+'_'+s;
+  return _prim[k]||(_prim[k]=new THREE.ConeGeometry(r,h,s)); }
+function cyl(rt,rb,h,seg){ const s=Math.max(6,Math.round((seg||12)*QM)), k='y'+rt.toFixed(3)+rb.toFixed(3)+h.toFixed(3)+'_'+s;
+  return _prim[k]||(_prim[k]=new THREE.CylinderGeometry(rt,rb,h,s)); }
+/* schiarisce/scurisce un colore per pancini, musetti, dettagli */
+function tint(hex,amt,white){
+  const c=new THREE.Color(hex);
+  return c.lerp(new THREE.Color(white?0xffffff:0x000000),amt).getHex();
+}
+/* ---- FUSIONE parti → geometria unica INDICIZZATA con colori per vertice ----
+   Mantenere gli indici (invece di "splattare" i triangoli) taglia i vertici di ~4 volte. */
+function mergeColored(parts){
+  const prepared=parts.map(p=>{
+    const m=new THREE.Matrix4();
+    m.compose(new THREE.Vector3(...(p.p||[0,0,0])),
+      new THREE.Quaternion().setFromEuler(new THREE.Euler(...(p.rot||[0,0,0]))),
+      new THREE.Vector3(...(p.s||[1,1,1])));
+    const t=p.g.clone().applyMatrix4(m);
+    return {t,c:new THREE.Color(p.c)};
+  });
+  const nV=prepared.reduce((a,q)=>a+q.t.attributes.position.count,0);
+  const nI=prepared.reduce((a,q)=>a+(q.t.index?q.t.index.count:q.t.attributes.position.count),0);
+  const pos=new Float32Array(nV*3), nor=new Float32Array(nV*3), col=new Float32Array(nV*3);
+  const idx=new Uint32Array(nI);
+  let vo=0, io=0;
+  prepared.forEach(({t,c})=>{
+    const P=t.attributes.position.array, N=t.attributes.normal?t.attributes.normal.array:null;
+    const n=t.attributes.position.count;
+    pos.set(P,vo*3);
+    if(N) nor.set(N,vo*3);
+    for(let k=0;k<n;k++){ col[(vo+k)*3]=c.r; col[(vo+k)*3+1]=c.g; col[(vo+k)*3+2]=c.b; }
+    if(t.index){ const I=t.index.array; for(let k=0;k<I.length;k++) idx[io+k]=I[k]+vo; io+=I.length; }
+    else { for(let k=0;k<n;k++) idx[io+k]=vo+k; io+=n; }
+    vo+=n; t.dispose();
+  });
+  // normalizza le normali (dopo le scale non uniformi)
+  for(let i=0;i<nV;i++){
+    const x=nor[i*3],y=nor[i*3+1],z=nor[i*3+2], L=Math.hypot(x,y,z)||1;
+    nor[i*3]=x/L; nor[i*3+1]=y/L; nor[i*3+2]=z/L;
+  }
+  const out=new THREE.BufferGeometry();
+  out.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  out.setAttribute('normal',new THREE.BufferAttribute(nor,3));
+  out.setAttribute('color',new THREE.BufferAttribute(col,3));
+  out.setIndex(new THREE.BufferAttribute(idx,1));
+  out.computeBoundingSphere();
+  return out;
+}
+/* materiali condivisi (pochissimi shader → avvio rapido) */
+const PLUSH_MAT=new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:.88,metalness:0,
+  sheen:1,sheenRoughness:.5,sheenColor:new THREE.Color(0xffe8f2),
+  clearcoat:.06,clearcoatRoughness:.6,envMapIntensity:.6});       // velluto/peluche
+const METAL_MAT=new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:.19,metalness:1,
+  envMapIntensity:2.2,clearcoat:.5,clearcoatRoughness:.06});      // oro/cromo
+const EYE=0x1a1220, CREAM=0xf7e6cf, PINK=0xff9ec4;
 const prizes=[];
+/* ---- forme estruse con bordo arrotondato (stella, cuore, corona) ---- */
+function starShape(r){
+  const s=new THREE.Shape();
+  for(let i=0;i<10;i++){
+    const a=-Math.PI/2+i*Math.PI/5, rad=i%2?r*.46:r;
+    const x=Math.cos(a)*rad, y=Math.sin(a)*rad;
+    i?s.lineTo(x,y):s.moveTo(x,y);
+  }
+  s.closePath(); return s;
+}
+function heartShape(r){
+  const s=new THREE.Shape();
+  s.moveTo(0,-r*.95);
+  s.bezierCurveTo(r*.95,-r*.3, r*.6,r*.8, 0,r*.3);
+  s.bezierCurveTo(-r*.6,r*.8, -r*.95,-r*.3, 0,-r*.95);
+  return s;
+}
+function crownShape(r){
+  const s=new THREE.Shape();
+  s.moveTo(-r*.95,-r*.55); s.lineTo(r*.95,-r*.55);
+  s.lineTo(r*.82,r*.5); s.lineTo(r*.42,-r*.08);
+  s.lineTo(0,r*.62); s.lineTo(-r*.42,-r*.08);
+  s.lineTo(-r*.82,r*.5); s.closePath(); return s;
+}
+function extrudeGeo(name,shape,r){
+  if(_prim[name]) return _prim[name];
+  const g=new THREE.ExtrudeGeometry(shape,{depth:r*.6,bevelEnabled:true,
+    bevelThickness:r*.14,bevelSize:r*.11,bevelOffset:0,
+    bevelSegments:LOWQ?2:3,curveSegments:LOWQ?8:14,steps:1});
+  g.center(); g.computeVertexNormals(); _prim[name]=g; return g;
+}
+/* ---- ORSETTO: corpo, testa, orecchie, muso, braccia, gambe ---- */
+function bearParts(r,col){
+  const fur=tint(col,.14,true), dark=tint(col,.2);
+  return [
+    {g:sph(r*.95),c:col,p:[0,-r*.15,0],s:[1,.98,.86]},
+    {g:sph(r*.6),c:CREAM,p:[0,-r*.2,r*.48],s:[1,.92,.42]},
+    {g:sph(r*.72),c:fur,p:[0,r*.78,0],s:[1,.95,1]},
+    {g:sph(r*.28),c:col,p:[-r*.54,r*1.2,-r*.08],s:[1,1,.62]},
+    {g:sph(r*.28),c:col,p:[ r*.54,r*1.2,-r*.08],s:[1,1,.62]},
+    {g:sph(r*.16),c:PINK,p:[-r*.54,r*1.2,r*.06],s:[1,1,.4]},
+    {g:sph(r*.16),c:PINK,p:[ r*.54,r*1.2,r*.06],s:[1,1,.4]},
+    {g:sph(r*.3),c:CREAM,p:[0,r*.66,r*.56],s:[1,.78,.82]},
+    {g:sph(r*.1),c:EYE,p:[0,r*.78,r*.76],s:[1.2,.85,.7]},
+    {g:sph(r*.095),c:EYE,p:[-r*.27,r*.92,r*.56]},
+    {g:sph(r*.095),c:EYE,p:[ r*.27,r*.92,r*.56]},
+    {g:sph(r*.045),c:0xffffff,p:[-r*.24,r*.97,r*.63]},
+    {g:sph(r*.045),c:0xffffff,p:[ r*.3,r*.97,r*.63]},
+    {g:cap(r*.18,r*.4),c:dark,p:[-r*.85,-r*.12,r*.1],rot:[0,0,.55]},
+    {g:cap(r*.18,r*.4),c:dark,p:[ r*.85,-r*.12,r*.1],rot:[0,0,-.55]},
+    {g:cap(r*.21,r*.18),c:dark,p:[-r*.4,-r*.8,r*.28],rot:[.35,0,.1]},
+    {g:cap(r*.21,r*.18),c:dark,p:[ r*.4,-r*.8,r*.28],rot:[.35,0,-.1]},
+  ];
+}
+/* ---- CONIGLIETTO: orecchie lunghe, codina ---- */
+function bunnyParts(r,col){
+  const fur=tint(col,.05,true);
+  return [
+    {g:sph(r*.9),c:col,p:[0,-r*.2,0],s:[.95,1,.9]},
+    {g:sph(r*.55),c:0xffffff,p:[0,-r*.25,r*.45],s:[1,.95,.4]},
+    {g:sph(r*.68),c:fur,p:[0,r*.72,0]},
+    {g:cap(r*.16,r*.72),c:fur,p:[-r*.3,r*1.5,-r*.05],rot:[0,0,.18],s:[1,1,.62]},
+    {g:cap(r*.16,r*.72),c:fur,p:[ r*.3,r*1.5,-r*.05],rot:[0,0,-.18],s:[1,1,.62]},
+    {g:cap(r*.09,r*.6),c:PINK,p:[-r*.3,r*1.5,r*.07],rot:[0,0,.18],s:[1,1,.5]},
+    {g:cap(r*.09,r*.6),c:PINK,p:[ r*.3,r*1.5,r*.07],rot:[0,0,-.18],s:[1,1,.5]},
+    {g:sph(r*.12),c:PINK,p:[0,r*.6,r*.62],s:[1.2,.8,.7]},
+    {g:sph(r*.095),c:EYE,p:[-r*.26,r*.85,r*.52]},
+    {g:sph(r*.095),c:EYE,p:[ r*.26,r*.85,r*.52]},
+    {g:sph(r*.045),c:0xffffff,p:[-r*.23,r*.9,r*.59]},
+    {g:sph(r*.045),c:0xffffff,p:[ r*.29,r*.9,r*.59]},
+    {g:sph(r*.28),c:0xffffff,p:[0,-r*.5,-r*.58]},
+    {g:cap(r*.16,r*.34),c:fur,p:[-r*.78,-r*.2,r*.1],rot:[0,0,.6]},
+    {g:cap(r*.16,r*.34),c:fur,p:[ r*.78,-r*.2,r*.1],rot:[0,0,-.6]},
+    {g:cap(r*.2,r*.14),c:fur,p:[-r*.34,-r*.85,r*.3],rot:[.4,0,0]},
+    {g:cap(r*.2,r*.14),c:fur,p:[ r*.34,-r*.85,r*.3],rot:[.4,0,0]},
+  ];
+}
+/* ---- RANA: larga, occhi sporgenti ---- */
+function frogParts(r,col){
+  const belly=tint(col,.6,true), lip=tint(col,.28);
+  return [
+    {g:sph(r*.9),c:col,p:[0,-r*.2,0],s:[1.15,.85,1]},
+    {g:sph(r*.62),c:belly,p:[0,-r*.28,r*.42],s:[1.1,.85,.45]},
+    {g:sph(r*.62),c:col,p:[0,r*.5,0],s:[1.25,.8,1.05]},
+    {g:sph(r*.26),c:col,p:[-r*.4,r*.95,r*.1]},
+    {g:sph(r*.26),c:col,p:[ r*.4,r*.95,r*.1]},
+    {g:sph(r*.17),c:0xffffff,p:[-r*.4,r*1.0,r*.24],s:[1,1,.6]},
+    {g:sph(r*.17),c:0xffffff,p:[ r*.4,r*1.0,r*.24],s:[1,1,.6]},
+    {g:sph(r*.09),c:EYE,p:[-r*.4,r*1.02,r*.36]},
+    {g:sph(r*.09),c:EYE,p:[ r*.4,r*1.02,r*.36]},
+    {g:sph(r*.24),c:lip,p:[0,r*.3,r*.6],s:[1.4,.45,.6]},
+    {g:cap(r*.17,r*.3),c:col,p:[-r*.75,-r*.5,r*.25],rot:[.5,0,.9]},
+    {g:cap(r*.17,r*.3),c:col,p:[ r*.75,-r*.5,r*.25],rot:[.5,0,-.9]},
+    {g:cap(r*.15,r*.26),c:col,p:[-r*.6,-r*.62,-r*.2],rot:[-.4,0,.7]},
+    {g:cap(r*.15,r*.26),c:col,p:[ r*.6,-r*.62,-r*.2],rot:[-.4,0,-.7]},
+  ];
+}
+/* ---- PINGUINO: ventre bianco, becco, ali ---- */
+function penguinParts(r,col){
+  const OR=0xff9a2e, wing=tint(col,.18,true);
+  return [
+    {g:cap(r*.72,r*.55),c:col,p:[0,0,0],s:[1,1,.92]},
+    {g:sph(r*.6),c:0xfdfdfd,p:[0,-r*.05,r*.42],s:[1,1.15,.42]},
+    {g:sph(r*.5),c:col,p:[0,r*.85,0],s:[1,.92,1]},
+    {g:cone(r*.16,r*.34),c:OR,p:[0,r*.78,r*.55],rot:[Math.PI/2,0,0]},
+    {g:sph(r*.09),c:EYE,p:[-r*.22,r*.95,r*.42]},
+    {g:sph(r*.09),c:EYE,p:[ r*.22,r*.95,r*.42]},
+    {g:sph(r*.04),c:0xffffff,p:[-r*.2,r*1.0,r*.49]},
+    {g:sph(r*.04),c:0xffffff,p:[ r*.24,r*1.0,r*.49]},
+    {g:cap(r*.17,r*.5),c:wing,p:[-r*.72,-r*.05,0],rot:[0,0,.25],s:[1,1,.5]},
+    {g:cap(r*.17,r*.5),c:wing,p:[ r*.72,-r*.05,0],rot:[0,0,-.25],s:[1,1,.5]},
+    {g:sph(r*.2),c:OR,p:[-r*.24,-r*.95,r*.18],s:[1.2,.45,1.5]},
+    {g:sph(r*.2),c:OR,p:[ r*.24,-r*.95,r*.18],s:[1.2,.45,1.5]},
+  ];
+}
+/* ---- GEMMA: taglio brillante sfaccettato (Lathe) + transmission (vetro vero) ---- */
+function gemGeo(r){
+  const k='gem'+r.toFixed(3);
+  if(_prim[k]) return _prim[k];
+  const e=Math.max(.002,r*.05);
+  const pts=[new THREE.Vector2(e,-r*1.25),new THREE.Vector2(r*.98,-r*.08),
+             new THREE.Vector2(r*.66,r*.4),new THREE.Vector2(e,r*.44)];
+  const g=new THREE.LatheGeometry(pts,12);
+  g.computeVertexNormals(); g.computeBoundingSphere(); _prim[k]=g; return g;
+}
+const _gemMats={};
+function gemMat(color){
+  return _gemMats[color]||(_gemMats[color]=new THREE.MeshPhysicalMaterial({
+    color,metalness:0,roughness:.02,transmission:.94,thickness:.6,ior:2.15,
+    clearcoat:1,clearcoatRoughness:.02,envMapIntensity:2.8,flatShading:true,
+    attenuationColor:new THREE.Color(color),attenuationDistance:1.6,transparent:true}));
+}
+/* ---- dispatcher: un template per tipo, i premi sono CLONI (stessa geometria, zero costi) ---- */
+const _tpl={};
+function prizeModel(prize){
+  if(_tpl[prize.name]) return _tpl[prize.name].clone();
+  const r=prize.r; let mesh;
+  if(prize.kind==='gem'){
+    mesh=new THREE.Mesh(gemGeo(r),gemMat(prize.color));
+  } else {
+    let parts, mat=PLUSH_MAT;
+    const face=[{g:sph(r*.09),c:EYE,p:[-r*.2,r*.08,r*.42]},{g:sph(r*.09),c:EYE,p:[r*.2,r*.08,r*.42]},
+                {g:sph(r*.11),c:PINK,p:[0,-r*.14,r*.4],s:[1.7,.75,.5]}];
+    switch(prize.name){
+      case 'Orsetto':     parts=bearParts(r,prize.color); break;
+      case 'Coniglietto': parts=bunnyParts(r,prize.color); break;
+      case 'Rana':        parts=frogParts(r,prize.color); break;
+      case 'Pinguino':    parts=penguinParts(r,prize.color); break;
+      case 'Stella':      mat=METAL_MAT; parts=[{g:extrudeGeo('star',starShape(r),r),c:prize.color},...face]; break;
+      case 'Cuore':       parts=[{g:extrudeGeo('heart',heartShape(r),r),c:prize.color},...face]; break;
+      case 'Corona':      mat=METAL_MAT; parts=[{g:extrudeGeo('crown',crownShape(r),r),c:prize.color},
+                          {g:sph(r*.13),c:0xff2d78,p:[-r*.5,r*.28,r*.28]},
+                          {g:sph(r*.15),c:0x22ccff,p:[0,r*.42,r*.28]},
+                          {g:sph(r*.13),c:0x31d158,p:[ r*.5,r*.28,r*.28]}]; break;
+      default:            parts=bearParts(r,prize.color);
+    }
+    mesh=new THREE.Mesh(mergeColored(parts),mat);
+  }
+  mesh.castShadow=true; mesh.receiveShadow=true;
+  _tpl[prize.name]=mesh;
+  return mesh.clone();
+}
 const FIELD={minX:-3.1,maxX:3.1,minZ:-2.2,maxZ:1.6};
 function spawnPrize(prize){
   prize=prize||pickPrize();
-  let m;
-  if(prize.kind==='gem'){
-    m=new THREE.Mesh(new THREE.OctahedronGeometry(prize.r),
-      new THREE.MeshStandardMaterial({color:prize.color,emissive:prize.color,emissiveIntensity:.9,metalness:.4,roughness:.15}));
-    m.castShadow=true;
-  } else {
-    // peluche = sprite emoji grande e colorato, sempre inquadrato
-    m=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTexture(prize.emoji),transparent:true,depthWrite:false}));
-    const s=prize.r*2.5; m.scale.set(s,s,1);
-  }
+  const m=prizeModel(prize);                    // modello 3D VERO (parti fuse in 1 sola mesh)
   m.userData.prize=prize;
   // spawn su GRIGLIA ordinata: pieno ma SISTEMATO (la fisica poi lo assesta)
   const cols=11, slot=prizes.length%(cols*5);
@@ -442,11 +979,10 @@ function spawnPrize(prize){
   m.position.set(x,startY,z);
   scene.add(m); prizes.push(m);
   if(physOn){
-    const rad=prize.r*(prize.kind==='gem'?.75:1.15);
-    const body=new CANNON.Body({mass:1,shape:new CANNON.Sphere(rad),
-      position:new CANNON.Vec3(x,startY,z),
-      material:new CANNON.Material({restitution:.2,friction:.6})});
-    body.linearDamping=.15; body.angularDamping=.4;
+    const rad=prize.r*(prize.kind==='gem'?.92:1.02);
+    const body=new CANNON.Body({mass:prize.kind==='gem'?1.5:1,shape:new CANNON.Sphere(rad),
+      position:new CANNON.Vec3(x,startY,z),material:PRIZE_PHYS});
+    body.linearDamping=.18; body.angularDamping=.82;   // restano "seduti", non ruotano impazziti
     body.sleepSpeedLimit=.35; body.sleepTimeLimit=.6; body.allowSleep=true;
     body.velocity.set((Math.random()-.5)*2,-3,(Math.random()-.5)*2);
     body.angularVelocity.set(Math.random(),Math.random(),Math.random());
@@ -462,10 +998,15 @@ retic.rotation.x=-Math.PI/2; retic.position.y=FLOOR_TOP+.02; scene.add(retic);
 /* ================= STATO PARTITA ================= */
 const G={
   phase:'idle',      // idle | down | grab | lift | carry | fall | back
-  t:0, timeLeft:0, running:false,
-  streak:0, caught:null, fall:null, legLen:1, closeAmt:0,
+  t:0, timeLeft:0, running:false, over:false,
+  streak:0, caught:null, fall:null, legLen:1, closeAmt:0, closeTarget:0,
+  raises:0, roundSpent:0, roundWins:0, lastRaisePrice:0,
   shake:0, intro:0, fovKick:0
 };
+const mmss=s=>{ s=Math.max(0,Math.floor(s)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
+drawDisplay();                                   // primo disegno del display LED, ora che G esiste
+const bagTotal=()=>Object.values(S.bag).reduce((a,b)=>a+b,0);
+const DOWN_LEN=4.9;                              // lunghezza massima della gamba in discesa
 const target={x:0,z:.4};
 const CLAW_LIMIT={minX:-3.0,maxX:3.0,minZ:-2.0,maxZ:2.3};
 
@@ -478,11 +1019,18 @@ function toast(msg,big){
 function flash(op){ const f=document.getElementById('flash'); f.style.transition='none'; f.style.opacity=op;
   requestAnimationFrame(()=>{ f.style.transition='opacity .5s'; f.style.opacity=0; }); }
 function updateHUD(){
-  document.getElementById('credits').textContent=S.credits;
+  document.getElementById('credits').textContent=fmtL(S.lire);
+  const eu=document.getElementById('euro'); if(eu) eu.textContent=toEuro(S.lire);
   document.getElementById('streak').textContent=G.streak;
   document.getElementById('level').textContent=S.level;
   document.getElementById('prizes').textContent=prizeCount();
+  const left=Math.max(0,maxRaises()-G.raises);
+  const rt=document.getElementById('raisesTxt'); if(rt) rt.textContent=left;
+  document.querySelectorAll('#raisePips .pip').forEach((p,i)=>{
+    p.className='pip '+((i===2&&!raiseUnlocked(2))?'lock':(i<left?'on':'used'));
+  });
   updateMissionChip();
+  syncButtons();
 }
 /* ================= MISSIONI 🎯 (obiettivi = dipendenza) ================= */
 const MISSIONS=[
@@ -497,24 +1045,26 @@ function missionDef(){ return MISSIONS[S.mission.i%MISSIONS.length]; }
 function updateMissionChip(){
   const m=missionDef();
   const el=document.getElementById('mission');
-  if(el) el.textContent='🎯 '+m.desc+' '+Math.min(S.mission.done,m.need)+'/'+m.need+' → +'+m.reward+'🪙';
+  const b=el&&el.querySelector('b');
+  if(b) b.textContent=m.desc+' '+Math.min(S.mission.done,m.need)+'/'+m.need;
 }
 function missionCheck(pr){
   const m=missionDef();
   if(m.test(pr)) S.mission.done++;
   if(S.mission.done>=m.need){
-    S.credits+=m.reward; S.mission.i++; S.mission.done=0;
-    SFX.big(); flash(.4); toast('🎯 MISSIONE COMPLETATA! +'+m.reward+' gettoni',true);
+    const rw=m.reward*100;                                  // ricompensa in LIRE
+    S.lire+=rw; S.mission.i++; S.mission.done=0;
+    SFX.big(); flash(.4); toast('🎯 MISSIONE COMPLETATA! +'+fmtL(rw)+'₤',true);
   }
-  save(); updateMissionChip();
+  save(); updateMissionChip(); updateHUD();
 }
 function addXP(n){
   S.xp+=n;
-  while(S.xp>=S.level*10){ S.xp-=S.level*10; S.level++; S.credits+=5;
-    toast('⭐ LIVELLO '+S.level+'! +5 gettoni',true); SFX.big(); }
+  while(S.xp>=S.level*10){ S.xp-=S.level*10; S.level++; S.lire+=500;
+    toast('⭐ LIVELLO '+S.level+'! +500₤',true); SFX.big(); }
   save(); updateHUD();
 }
-function spend(n){ if(S.credits<n) return false; S.credits-=n; save(); updateHUD(); return true; }
+function spend(n){ if(S.lire<n) return false; S.lire-=n; save(); updateHUD(); return true; }
 
 /* ================= CONTROLLI ================= */
 let moveTouch=null;
@@ -535,51 +1085,106 @@ addEventListener('pointermove',e=>{
 addEventListener('pointerup',()=>moveTouch=null);
 
 /* ================= SEQUENZA BRACCIO ================= */
+/* quali pulsanti mostrare: moneta / discesa / risalita (mai tutti insieme) */
+function syncButtons(){
+  const coin=document.getElementById('coinBtn'), drop=document.getElementById('dropBtn'),
+        raise=document.getElementById('raiseBtn');
+  const running=G.running&&!G.over;
+  coin.classList.toggle('hidden',running);
+  drop.classList.toggle('hidden',!(running&&G.phase==='idle'));
+  const canRaise=running&&G.phase==='down';
+  raise.classList.toggle('hidden',!canRaise);
+  if(canRaise){
+    const i=G.raises, unlocked=raiseUnlocked(i), price=raisePrice(i), mx=maxRaises();
+    document.getElementById('raiseCost').textContent=
+      i>=mx?'FINITE':(unlocked?fmtL(price)+'₤':'🔒 SHOP');
+    raise.classList.toggle('pulse',unlocked&&i<mx);
+    raise.disabled=i>=mx||!unlocked;
+  }
+}
 function startRound(){
-  if(G.phase!=='idle'||G.running) return false;
-  if(S.credits<1){                               // ⚠️ controlli PRIMA, addebito DOPO (mai gettoni mangiati)
+  if(G.running||G.phase!=='idle') return false;
+  if(!spendL(ROUND_COST)){                        // ⚠️ addebito SOLO se la parte davvero (mai lire mangiate)
     SFX.fail();
-    toast('🪙 SERVONO GETTONI! Premi 🎁 per il bonus gratis',true);
+    toast('🪙 Servono '+fmtL(ROUND_COST)+'₤! Premi 🎁 per il bonus gratis',true);
     const bb=document.getElementById('bonusBtn');
     bb.style.transition='transform .15s'; bb.style.transform='scale(1.35)';
     setTimeout(()=>bb.style.transform='',600);
     return false;
   }
-  S.credits-=1; save();                          // gettone consumato UNA volta, solo qui
-  G.running=true; G.timeLeft=gameTime();
-  G.phase='idle'; G.intro=1.6;
-  while(prizeCount()<50) spawnPrize();          // il cabinato si RICOLMA a ogni round
-  toast('🪙 Gettone inserito! ⏱️ Hai '+G.timeLeft+' secondi!');
-  updateHUD();
+  coinInsertFX();                                 // 💰 la moneta si infila nella fessura (3D)
+  G.running=true; G.over=false; G.timeLeft=gameTime();
+  G.raises=0; G.roundSpent=ROUND_COST; G.roundWins=0; G.lastRaisePrice=0;
+  G.phase='idle'; G.intro=1.6; G.closeAmt=0; G.closeTarget=0;
+  while(prizeCount()<QUAL.prizes) spawnPrize();   // il cabinato si RICOLMA a ogni round
+  document.getElementById('gameOver').classList.add('hidden');
+  toast('🪙 '+fmtL(ROUND_COST)+'₤ inserite! ⏱️ '+mmss(G.timeLeft)+' · '+MAX_RAISES+' risalite',true);
+  syncButtons(); updateHUD();
   return true;
 }
 function doDrop(){
-  if(!G.running){ startRound(); return; }   // primo tocco = inserisci round
+  if(!G.running){ startRound(); return; }         // primo tocco = inserisci la moneta
   if(G.phase!=='idle') return;
+  if(G.raises>=maxRaises()){ gameOver('🦾 Risalite esaurite!'); return; }   // mai una discesa inutile
   SFX.drop(); SFX.dive();
-  G.snapDone=false; G.liftSfx=false; G.swing=0;
+  G.snapDone=false; G.liftSfx=false; G.swing=0; G.closeTarget=0;
   G.phase='down'; G.t=0;
-  document.getElementById('dropBtn').disabled=true;
+  syncButtons();
+}
+/* cervello della risalita: addebita (solo se può) e fa scattare la pinza. auto=true → arrivata a terra */
+function beginGrab(auto){
+  const i=G.raises, mx=maxRaises();
+  G.lastRaisePrice=0;
+  if(i<mx){
+    const price=raiseUnlocked(i)?raisePrice(i):0;
+    if(price>0){
+      if(spendL(price)){                          // paghi SOLO se la risalita parte davvero
+        G.roundSpent+=price; G.lastRaisePrice=price; SFX.coin();
+        toast('⬆️ Risalita '+(i+1)+'/'+mx+' → -'+fmtL(price)+'₤ ('+toEuro(price)+')');
+      } else { SFX.fail(); toast('💸 Lire insufficienti: risalita GRATIS!'); }   // MAI bloccare
+    }
+    G.raises++;
+  }
+  G.phase='grab'; G.t=0; G.closeAmt=0; G.closeTarget=1; G.snapDone=false;
+  snapFX(); syncButtons(); updateHUD();
+}
+/* ⬆️ RISALITA MANUALE durante la discesa: 200 → 500 → 1000₤ */
+function doRaise(){
+  if(G.phase!=='down'||!G.running) return;
+  const i=G.raises;
+  if(i>=maxRaises()){ SFX.fail(); toast('🚫 Risalite finite!'); return; }
+  if(!raiseUnlocked(i)){ SFX.fail(); toast('🔒 La 3ª risalita (1000₤) si sblocca nello SHOP!',true); return; }
+  beginGrab(false);
 }
 function finishRound(){
   G.running=false;
-  document.getElementById('dropBtn').disabled=(G.phase!=='idle');
-  if(G.phase==='idle'){
-    document.getElementById('timer').textContent='--';
-    toast('⏰ ROUND FINITO — premi DISCI per giocare!');
-  }
+  syncButtons();
+  if(G.phase==='idle') gameOver('⏰ Tempo scaduto!');
+}
+function gameOver(reason){
+  G.running=false; G.over=true; G.phase='idle'; G.closeTarget=0; G.closeAmt=0;
+  const tb=document.getElementById('timer').querySelector('b'); if(tb) tb.textContent='0:00';
+  document.getElementById('goStats').innerHTML=
+    (reason||'Partita finita')+'<br>Premi vinti: <b>'+G.roundWins+'</b> · Combo: <b>x'+G.streak+'</b>'
+    +'<br>Risalite usate: <b>'+G.raises+'/'+maxRaises()+'</b>'
+    +'<br>Lire spese: <b>'+fmtL(G.roundSpent||0)+'₤</b> ('+toEuro(G.roundSpent||0)+')'
+    +'<br>🎒 Borsa: <b>'+bagTotal()+'</b> pezzi · Saldo: <b>'+fmtL(S.lire)+'₤</b> ('+toEuro(S.lire)+')';
+  document.getElementById('gameOver').classList.remove('hidden');
+  SFX.big(); syncButtons(); updateHUD();
 }
 function win(prize){
   const mul=prize.kind==='gem'?luckyMul():1;
-  const gain=Math.round(prize.val*mul);
+  const gain=Math.round(prize.val*100*mul);            // valore in LIRE
   G.streak++;
   const bonus=1+(G.streak-1)*.5;
   const total=Math.round(gain*bonus);
-  S.credits+=total; S.totalWins++;
+  S.lire+=total; S.totalWins++; G.roundWins++;
+  S.bag[prize.name]=(S.bag[prize.name]||0)+1;           // 🎒 BORSA INFINITA
   if(G.streak>S.best) S.best=G.streak;
   save(); addXP(prize.kind==='gem'?3:1);
-  if(prize.kind==='gem'){ SFX.gem(); toast('💎 '+prize.name+'! +'+total+' gettoni',true); }
-  else { SFX.coin(); toast(prize.emoji+' '+prize.name+'! +'+total+' 🪙', G.streak>2); }
+  addToCup(prize);                                      // si AMMASSA nel bicchierone sul cabinato
+  if(prize.kind==='gem'){ SFX.gem(); toast('💎 '+prize.name+'! +'+fmtL(total)+'₤ ('+toEuro(total)+')',true); }
+  else { SFX.coin(); toast(prize.emoji+' '+prize.name+'! +'+fmtL(total)+'₤', G.streak>2); }
   if(G.streak>=3) setTimeout(()=>toast('🔥 COMBO x'+G.streak+'! bonus +'+Math.round((bonus-1)*100)+'%',true),350);
   flash(.3); G.shake=.35;
   confetti(claw.position.x,2,2.2);
@@ -676,22 +1281,24 @@ function animate(){
     // pinza VIVA: vortice e "masticazione" delle dita
     if(G.phase==='idle'){
       pinch.rotation.y+=dt*(G.running?.9:1.8);           // vortice più naturale
-      G.closeAmt=.2+Math.sin(t*3.2)*.16;
+      G.closeTarget=G.running?(.18+Math.sin(t*3.2)*.13):0;   // "respiro" delle dita (target, non forzato)
     } else if(G.phase==='down'||G.phase==='lift'){
       pinch.rotation.y+=dt*.3;                             // leggero moto (non strano)
     }
     // carrello che bobba
     carriage.position.y=-.25+Math.sin(t*(G.phase==='idle'?4:9))*.035;
   }
+  // le dita INSEGUONO il target: chiusura/apertura morbida e continua (mai scatti rigidi)
+  G.closeAmt+=(G.closeTarget-G.closeAmt)*Math.min(1,dt*14);
   applyFingers(G.closeAmt,true,t);
 
   const pinchY=()=>claw.position.y+pinch.position.y;        // quota mondiale della pinza
   if(physOn) world.step(1/60,dt,3);
 
   if(G.phase==='down'){
-    // discesa con EASE: veloce in alto, LENTA e drammatica sull'approccio finale
-    const targetLen=4.9, rem=targetLen-G.legLen;
-    G.legLen=Math.min(targetLen,G.legLen+dt*(rem>1.5?4.4:1.7));
+    // discesa con EASE: veloce in alto, più controllata sull'approccio finale
+    const targetLen=DOWN_LEN, rem=targetLen-G.legLen;
+    G.legLen=Math.min(targetLen,G.legLen+dt*(rem>1.5?4.4:2.2));
     leg.scale.y=G.legLen; leg.position.y=-.3-G.legLen/2;
     pinch.position.y=-.35-G.legLen;
     // la pinza che scende SPINGE i premi (interazione fisica vera)
@@ -707,25 +1314,36 @@ function animate(){
         }
       });
     }
-    if(pinchY()<=1.65){ G.phase='grab'; G.t=0; G.closeAmt=0; snapFX(); }   // 💥 SCATTO da zero
+    if(G.legLen>=DOWN_LEN-1e-3){ beginGrab(true); }   // ✅ TOLLERANZA: prima il confronto fp bloccava per sempre
   }
   else if(G.phase==='grab'){
-    G.t+=dt*.8;                                   // rallentatore APPENA accennato (MAI blocchi)
-    G.shake=Math.max(G.shake,.04);                // vibrazione sottile durante lo scatto
-    G.closeAmt=Math.min(1,G.t*3.4);
-    if(!G.snapDone&&G.closeAmt>=1){ G.snapDone=true; SFX.clank(); }
-    if(G.t>.3){
-      const c=claw.position, mr=magnetR();
+    G.t+=dt;                                      // ⚡ TEMPO REALE: il rallentatore durava troppo e sembrava un blocco
+    G.shake=Math.max(G.shake,.035);               // vibrazione sottile durante lo scatto
+    if(!G.snapDone&&G.closeAmt>=.97){ G.snapDone=true; SFX.clank(); }
+    if(G.t>.22){
+      const c=claw.position, mr=magnetR(), py0=pinchY();
       let best=null,bd=1e9;
       prizes.forEach(p=>{
         if(p.userData.held||p.userData.released) return;
+        if(Math.abs(p.position.y-py0)>1.0) return;        // deve essere VICINO anche in altezza (niente prese dall'alto)
         const d=Math.hypot(p.position.x-c.x,p.position.z-c.z);
         if(d<bd){ bd=d; best=p; }
       });
       if(best && bd<mr && Math.random()<pickChance(best.userData.prize)){
         G.caught=best; best.userData.held=true;
         const b=best.userData.body;
-        if(b){ b.type=CANNON.Body.KINEMATIC; b.velocity.set(0,0,0); b.angularVelocity.set(0,0,0); }
+        if(b){                                        // VINCOLO reale: appeso alla pinza, dondola e urta gli altri premi
+          const pr0=best.userData.prize;
+          const rad=pr0.r*(pr0.kind==='gem'?.92:1.02);
+          b.wakeUp();
+          if(clawAnchor){
+            const con=new CANNON.PointToPointConstraint(clawAnchor,new CANNON.Vec3(0,0,0),
+              b,new CANNON.Vec3(0,rad*.9,0),320);
+            world.addConstraint(con);
+            best.userData.con=con; best.userData.rad=rad;
+          } else { b.type=CANNON.Body.KINEMATIC; b.velocity.set(0,0,0); b.angularVelocity.set(0,0,0); }
+        }
+        G.closeTarget=THREE.MathUtils.clamp(1.06-(best.userData.prize.r-.28)*1.15,.6,1);  // dita chiuse FINO al premio
         SFX.grab(); G.phase='lift'; G.t=0;
         toast('🦾 PRESA! su su…');
       } else { lose(); G.phase='lift'; G.t=0; G.caught=null; }
@@ -740,23 +1358,18 @@ function animate(){
     leg.scale.y=G.legLen; leg.position.y=-.3-G.legLen/2;
     pinch.position.y=-.35-G.legLen;
     if(G.caught){
-      G.swing=(G.swing||0)+dt*6.5;                       // il premio DONDOLA appeso
-      const sw=Math.sin(G.swing)*.14;
-      const px=claw.position.x+sw, py=pinchY()-.85, pz=claw.position.z+sw*.6;
       const b=G.caught.userData.body;
-      if(b){ b.position.set(px,py,pz); b.velocity.set(0,0,0); b.angularVelocity.set(0,0,0); }
-      else G.caught.position.set(px,py,pz);
+      holdFollow(b,G.caught.userData,pinchY());          // swing FISICO vero (niente animazione finta)
       G.shake=Math.max(G.shake,.05);                     // micro-vibrazione = tensione
       // 💦 il premio può SCIVOLARE dalle dita (le gemme scivolano di più!)
       const pr=G.caught.userData.prize;
       const rate=(pr.kind==='gem'?.5:.12)*(1-gripChance()*.55);
       if(Math.random()<rate*dt){
-        if(b){ b.type=CANNON.Body.DYNAMIC; b.wakeUp(); b.velocity.set((Math.random()-.5)*3,1.5,(Math.random()-.5)*3); }
-        G.caught.userData.held=false; G.caught=null;
+        releaseHeld(G.caught,true); G.caught=null;
         G.streak=0; SFX.fail(); toast('😅 SCIVOLATO dalle dita!'); updateHUD();
       }
     }
-    if(G.legLen<=1.05&&G.t>1){
+    if(G.legLen<=1.02&&G.t>.3){
       if(G.caught){ G.phase='carry'; G.t=0; }
       else { G.phase='back'; G.t=0; }
     }
@@ -764,17 +1377,11 @@ function animate(){
   else if(G.phase==='carry'){                                // porta il premio sopra il buco
     G.t+=dt;
     target.x+=(0-target.x)*dt*5; target.z+=(2.3-target.z)*dt*5;
-    if(G.caught){
-      const px=claw.position.x, py=pinchY()-.85, pz=claw.position.z;
-      const b=G.caught.userData.body;
-      if(b){ b.position.set(px,py,pz); b.velocity.set(0,0,0); b.angularVelocity.set(0,0,0); }
-      else G.caught.position.set(px,py,pz);
-    }
+    if(G.caught) holdFollow(G.caught.userData.body,G.caught.userData,pinchY());
     if((Math.abs(claw.position.x)<.15&&Math.abs(claw.position.z-2.3)<.15)||G.t>5){
-      G.closeAmt=0;
-      const b=G.caught.userData.body;
-      G.caught.userData.held=false; G.caught.userData.released=true;
-      if(b){ b.type=CANNON.Body.DYNAMIC; b.wakeUp(); b.velocity.set(0,-3,0); b.angularVelocity.set(0,0,0); }
+      G.closeTarget=0;                                       // molla la presa: le dita si RIAPRONO
+      G.caught.userData.released=true;                       // non più riafferrabile/pushabile
+      releaseHeld(G.caught,false);        // molla la presa: la FISICA lo fa cadere nel buco
       G.fall=G.caught; G.caught=null;
       SFX.drop(); shockRing(0,2.3,0xffd23e); G.fovKick=5;   // luce al buco!
       G.phase='fall'; G.t=0;
@@ -799,26 +1406,65 @@ function animate(){
     G.t+=dt;
     G.legLen=Math.max(1,G.legLen-dt*2); leg.scale.y=G.legLen; leg.position.y=-.3-G.legLen/2;
     pinch.position.y=-.35-G.legLen;
-    G.closeAmt=Math.max(0,G.closeAmt-dt*1.5);
-    if(G.t>1.2){
-      G.phase='idle'; document.getElementById('dropBtn').disabled=false;
-      if(!G.running){ document.getElementById('timer').textContent='--'; toast('⏰ ROUND FINITO — premi DISCI per giocare!'); }
+    G.closeTarget=0;
+    if(G.t>1.1){
+      G.phase='idle';
+      syncButtons();
+      if(!G.running){ const tb=document.getElementById('timer').querySelector('b'); if(tb) tb.textContent='0:00'; }
+      if(G.running&&G.raises>=maxRaises()) gameOver('🦾 Risalite esaurite!');
+      else if(G.running) toast('⬇️ Risalite rimaste: '+(maxRaises()-G.raises)+' — premi DISCI');
+      else if(!G.over) gameOver('⏰ Tempo scaduto!');
     }
   }
 
-  // ============ WATCHDOG: MAI bloccare (reset di sicurezza dopo 12s) ============
+  // ============ WATCHDOG: MAI bloccare (reset di sicurezza dopo 5s) ============
   if(G._ph!==G.phase){ G._ph=G.phase; G._phT=0; }
   G._phT=(G._phT||0)+dt;
-  if(G.phase!=='idle'&&G._phT>12){
-    if(G.caught){ const b=G.caught.userData.body; if(b){ b.type=CANNON.Body.DYNAMIC; b.wakeUp&&b.wakeUp(); } G.caught.userData.held=false; G.caught=null; }
+  if(G.phase!=='idle'&&G._phT>5){
+    if(G.caught){ releaseHeld(G.caught,true); G.caught=null; }
     if(G.fall){ const fb=G.fall.userData.body; if(fb&&world) world.removeBody(fb); scene.remove(G.fall); const fi=prizes.indexOf(G.fall); if(fi>=0) prizes.splice(fi,1); G.fall=null; }
-    G.closeAmt=0; G.legLen=1;
+    G.closeAmt=0; G.closeTarget=0; G.legLen=1;
     leg.scale.y=1; leg.position.y=-.8; pinch.position.y=-1.35;
     G.phase='idle'; G._phT=0;
-    document.getElementById('dropBtn').disabled=false;
-    SFX.fail(); toast('⚙️ Autorestart — si continua a giocare!');
+    refundL(G.lastRaisePrice,'Autorestart (blocco evitato)');   // 💰 MAI lire mangiate
+    G.lastRaisePrice=0;
+    syncButtons();
+    SFX.fail(); toast('⚙️ Autorestart — si continua a giocare!',true);
+    if(G.running&&G.raises>=maxRaises()) gameOver('🦾 Risalite esaurite!');
+    else if(!G.running&&!G.over) gameOver('⏰ Tempo scaduto!');
     updateHUD();
   }
+
+  // ---- BICCHIERONE: i premi vinti si assestano nella pila (+ scossone all'arrivo) ----
+  cupShake=Math.max(0,cupShake-dt*2);
+  cupGroup.position.x=CUP.x+Math.sin(t*40)*cupShake*.02;
+  cupLight.intensity=5+Math.sin(t*3)*1.5+cupShake*9;
+  for(let ci=0;ci<cupItems.length;ci++){
+    const it=cupItems[ci];
+    it.t=Math.min(1,(it.t||0)+dt*2.4);
+    const jig=(it.jiggle||0)*Math.sin(performance.now()*.018+ci)*.035;
+    it.mesh.position.x+=(it.slot.x-it.mesh.position.x)*Math.min(1,dt*8);
+    it.mesh.position.z+=(it.slot.z-it.mesh.position.z)*Math.min(1,dt*8);
+    it.mesh.position.y+=((it.slot.y+jig)-it.mesh.position.y)*Math.min(1,dt*7);
+    it.mesh.rotation.y+=dt*(.4+(it.jiggle||0));
+    it.jiggle=Math.max(0,(it.jiggle||0)-dt*1.3);
+  }
+
+  // ---- MONETA 3D che si infila nella fessura ----
+  if(coinT<1){
+    coinT=Math.min(1,coinT+dt*1.8);
+    const e=coinT;
+    coinMesh.position.x=SLOT.x+.95*(1-e)+Math.sin(e*Math.PI*3)*.14*(1-e);
+    coinMesh.position.y=SLOT.y+1.6*(1-e)*(1-e);
+    coinMesh.position.z=SLOT.z+1.5*(1-e);
+    coinMesh.rotation.y+=dt*16;
+    if(e>.72) slotGlow.intensity=9*Math.max(0,1-(e-.72)/.28);
+    if(e>=1){ coinMesh.visible=false; slotGlow.intensity=0; }
+  }
+
+  // ---- display LED incorporato nel cabinato (aggiornato 5 volte al secondo: leggero) ----
+  dispAcc+=dt;
+  if(dispAcc>.2){ dispAcc=0; drawDisplay(); }
 
   // reticolo di mira: segue il braccio, mostra il raggio di presa
   retic.visible=(G.phase==='idle');
@@ -829,14 +1475,35 @@ function animate(){
   // FISICA → mesh (i premi si impilano, rotolano, cadono davvero)
   prizes.forEach(p=>{
     const b=p.userData.body;
-    if(physOn&&b){ physSync(p,b); }
+    if(physOn&&b){
+      physSync(p,b);
+      // SQUASH & STRETCH: l'impatto si VEDE sul modello (juice fisico)
+      const sp=Math.hypot(b.velocity.x,b.velocity.y,b.velocity.z);
+      const want=Math.max(0,Math.min(.17,(sp-3)*.04));
+      const s=p.userData.sq=(p.userData.sq||0)+((p.userData.held?0:want)-(p.userData.sq||0))*Math.min(1,dt*16);
+      p.scale.set(1+s*.85,1-s,1+s*.85);
+    }
     else if(!p.userData.held){
       const r=p.userData.prize.r;
       p.position.y+=(FLOOR_TOP+r-p.position.y)*Math.min(1,dt*6);
     }
   });
 
-  if(prizeCount()<45 && Math.random()<dt*4) spawnPrize();   // cabinato sempre RICOLMO
+  if(prizeCount()<QUAL.prizes*.9 && Math.random()<dt*4) spawnPrize();   // cabinato sempre RICOLMO
+
+  /* PULIZIA: i premi finiti nel buco da soli (o impazziti) vanno rimossi,
+     altrimenti restano contati in prizeCount() e il campo si svuota senza rimpiazzi */
+  if(physOn){
+    for(let i=prizes.length-1;i>=0;i--){
+      const p=prizes[i];
+      if(p===G.fall||p.userData.held) continue;
+      const b=p.userData.body;
+      if(b&&(b.position.y<.05||!Number.isFinite(b.position.y)||!Number.isFinite(b.position.x))){
+        if(p.userData.con){ world.removeConstraint(p.userData.con); p.userData.con=null; }
+        world.removeBody(b); scene.remove(p); prizes.splice(i,1);
+      }
+    }
+  }
 
   neon1.position.set(Math.cos(t*1.6)*3.6,6.2,Math.sin(t*1.6)*2.6-0.5);   // discoteca!
   neon2.position.set(Math.cos(t*1.6+Math.PI)*3.6,6.2,Math.sin(t*1.6+Math.PI)*2.6-0.5);
@@ -892,26 +1559,22 @@ function animate(){
   }
   camera.lookAt(camLook);
 
-  // ============ SICUREZZA: MAI rimanere senza gettoni ============
-  if(S.credits<1 && Date.now()-(S._lastFree||0)>90000){
-    S._lastFree=Date.now(); S.credits+=5; save(); updateHUD();
-    SFX.coin(); toast('🪙 +5 gettoni gratis! (mai blocchi)',true);
+  // ============ SICUREZZA: MAI rimanere senza lire ============
+  if(S.lire<ROUND_COST && Date.now()-(S._lastFree||0)>45000){
+    S._lastFree=Date.now(); S.lire+=500; save(); updateHUD();
+    SFX.coin(); toast('🪙 +500₤ gratis! (mai blocchi)',true);
   }
-  if(G.running&&G.phase!=='over'){
+  if(G.running&&!G.over){
     G.timeLeft-=dt;
     const s=Math.max(0,Math.ceil(G.timeLeft));
     const el=document.getElementById('timer');
-    el.textContent=s+'s'; el.classList.toggle('low',s<=5);
-    if(s!==lastTick&&s<=5&&s>0){ SFX.tick(); lastTick=s; }
+    const tb=el.querySelector('b'); if(tb&&tb.textContent!==mmss(s)) tb.textContent=mmss(s);
+    el.classList.toggle('low',s<=10);
+    if(s!==lastTick&&s<=10&&s>0){ SFX.tick(); lastTick=s; }
     if(G.timeLeft<=0){ toast('⏰ Tempo finito!',true); finishRound(); }
   }
 
-  // etichetta pulsante: mostra il costo quando puoi giocare
-  {
-    const db=document.getElementById('dropBtn');
-    const want=(!G.running&&G.phase==='idle')?'GIOCA<br>1 🪙':'DISCI<br>↓';
-    if(db.innerHTML!==want) db.innerHTML=want;
-  }
+  syncButtons();
   renderer.render(scene,camera);
 }
 function pickChance(pr){
@@ -923,16 +1586,48 @@ function pickChance(pr){
 }
 
 /* ================= UI WIRING ================= */
-const UP_COST={grip:8,time:6,magnet:10,lucky:12};
-function upCost(k){ return UP_COST[k]+S.up[k]*4; }
+const UP_COST={grip:800,time:600,magnet:1000,lucky:1200,key1000:2500,discount:1500};
+const UP_MAX ={grip:5,time:5,magnet:5,lucky:5,key1000:1,discount:5};
+const upCost=k=>UP_COST[k]+(S.up[k]||0)*400;
 function refreshShop(){
   document.querySelectorAll('.buy').forEach(b=>{
-    const k=b.dataset.up;
-    b.textContent = S.up[k]>=5 ? 'MAX' : '🪙 '+upCost(k);
-    b.disabled = S.up[k]>=5;
+    const k=b.dataset.up, mx=UP_MAX[k]||5;
+    b.textContent = (S.up[k]||0)>=mx ? 'MAX' : '₤ '+fmtL(upCost(k));
+    b.disabled = (S.up[k]||0)>=mx;
   });
 }
+/* 🎒 BORSA INFINITA: tutti gli item raccolti, con valore in lire ed euro */
+function buildBag(){
+  let tot=0, value=0;
+  const cells=PRIZES.map(p=>{
+    const q=S.bag[p.name]||0; tot+=q; value+=q*p.val*100;
+    return '<div class="bagCell'+(q?'':' empty')+'"><span class="em">'+p.emoji+'</span>'
+      +'<span class="nm">'+p.name+'</span><span class="qt">x'+q+'</span></div>';
+  }).join('');
+  document.getElementById('bagGrid').innerHTML=cells;
+  document.getElementById('bagSum').innerHTML=
+    '🎒 <b style="color:#ffd23e">'+tot+'</b> pezzi nella borsa infinita · valore raccolto '
+    +'<b style="color:#ffd23e">'+fmtL(value)+'₤</b> ('+toEuro(value)+')<br>'
+    +'Premi vinti in carriera: '+S.totalWins+' · Combo record: x'+S.best;
+}
+document.getElementById('coinBtn').onclick=()=>{           // 💰 PULSANTE MONETA ANIMATO
+  ac().resume&&ac().resume();
+  const cb=document.getElementById('coinBtn');
+  cb.classList.remove('inserting'); void cb.offsetWidth; cb.classList.add('inserting');
+  SFX.coin();
+  startRound();
+};
 document.getElementById('dropBtn').onclick=doDrop;
+document.getElementById('raiseBtn').onclick=doRaise;
+document.getElementById('bagBtn').onclick=()=>{ buildBag(); document.getElementById('bag').classList.remove('hidden'); };
+document.getElementById('bagClose').onclick=()=>document.getElementById('bag').classList.add('hidden');
+document.getElementById('goAgain').onclick=()=>{            // rigioca con una nuova moneta
+  document.getElementById('gameOver').classList.add('hidden');
+  ac().resume&&ac().resume();
+  const cb=document.getElementById('coinBtn');
+  cb.classList.remove('inserting'); void cb.offsetWidth; cb.classList.add('inserting');
+  SFX.coin(); startRound();
+};
 document.getElementById('shopBtn').onclick=()=>{ document.getElementById('shop').classList.remove('hidden'); refreshShop(); };
 document.getElementById('shopClose').onclick=closeShop;
 function closeShop(){ document.getElementById('shop').classList.add('hidden'); }
@@ -945,26 +1640,39 @@ document.getElementById('bonusBtn').onclick=()=>{
   if(window._bonusAt && now-window._bonusAt<60000){
     toast('🎁 Ricarica tra '+Math.ceil((60000-(now-window._bonusAt))/1000)+'s'); return;
   }
-  window._bonusAt=now; S.credits+=10; save(); updateHUD(); SFX.coin(); toast('🎁 +10 gettoni gratis!');
+  window._bonusAt=now; S.lire+=1000; save(); updateHUD(); SFX.coin(); toast('🎁 +1.000₤ gratis!');
 };
 document.querySelectorAll('.buy').forEach(b=>b.onclick=()=>{
-  const k=b.dataset.up;
-  if(S.up[k]>=5){ toast('⭐ Al massimo!'); return; }
-  if(!spend(upCost(k))){ toast('🪙 Gettoni insufficienti!'); return; }
-  S.up[k]++; save(); SFX.buy(); toast('✅ '+k+' → Liv '+S.up[k]); updateHUD(); refreshShop();
+  const k=b.dataset.up, mx=UP_MAX[k]||5;
+  if((S.up[k]||0)>=mx){ toast('⭐ Al massimo!'); return; }
+  const cost=upCost(k);
+  if(!spend(cost)){ toast('🪙 Servono '+fmtL(cost)+'₤ ('+toEuro(cost)+')'); return; }
+  S.up[k]=(S.up[k]||0)+1; save(); SFX.buy();
+  toast(k==='key1000'?'🔑 3ª risalita (1000₤) SBLoccata!':'✅ '+k+' → Liv '+S.up[k], k==='key1000');
+  updateHUD(); refreshShop();
 });
 document.getElementById('playBtn').onclick=()=>{
   document.getElementById('startScreen').style.display='none';
   ac().resume&&ac().resume();
+  const cb=document.getElementById('coinBtn');
+  cb.classList.remove('inserting'); void cb.offsetWidth; cb.classList.add('inserting');
+  SFX.coin();
   startRound();
 };
 audioOn=S.sound!==false;
 document.getElementById('soundBtn').textContent=audioOn?'🔊':'🔇';
+addEventListener('keydown',e=>{
+  if(e.key===' '||e.key==='Enter'){
+    e.preventDefault();
+    if(G.phase==='down') doRaise();                    // in discesa il tasto grande = RISALITA
+    else if(G.phase==='idle') doDrop();
+  }
+});
 
 /* init */
-for(let i=0;i<55;i++) spawnPrize();
+for(let i=0;i<QUAL.prizes;i++) spawnPrize();
 updateHUD();
-document.getElementById('timer').textContent='--';
+const tb0=document.getElementById('timer').querySelector('b'); if(tb0) tb0.textContent=mmss(gameTime());
 addEventListener('resize',()=>{
   camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
   renderer.setSize(innerWidth,innerHeight);
