@@ -661,7 +661,7 @@ function drawDisplay(){
   x.fillText('RISALITE '+Math.max(0,maxRaises()-G.raises)+'/'+maxRaises(),982,182);
   dispTex.needsUpdate=true;
 }
-drawDisplay();
+// drawDisplay() si chiama dopo `const G` (più sotto): qui G non esiste ancora.
 
 /* ================= BRACCIO MECCANICO ================= */
 // binario FISSO sul tetto (non si muove col braccio)
@@ -1004,6 +1004,7 @@ const G={
   shake:0, intro:0, fovKick:0
 };
 const mmss=s=>{ s=Math.max(0,Math.floor(s)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
+drawDisplay();                                   // primo disegno del display LED, ora che G esiste
 const bagTotal=()=>Object.values(S.bag).reduce((a,b)=>a+b,0);
 const DOWN_LEN=4.9;                              // lunghezza massima della gamba in discesa
 const target={x:0,z:.4};
