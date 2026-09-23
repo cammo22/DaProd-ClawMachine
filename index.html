@@ -60,6 +60,14 @@
   #raiseBtn.hidden{display:none}
   #raiseBtn.pulse{animation:rpulse .8s infinite}
   @keyframes rpulse{50%{box-shadow:0 0 40px #22ccff,0 6px 0 #063c52,inset 0 2px 7px #ffffffaa}}
+  /* PULSANTE RIALZA GRATIS (v0.9): torna su vuota, senza pagare, e si riprova */
+  #freeBtn{width:84px;height:84px;border-radius:50%;border:none;cursor:pointer;
+    background:radial-gradient(circle at 34% 28%,#d8ffd9,#39d98a 52%,#0d6b3c);
+    box-shadow:0 0 22px #39d98abb,0 6px 0 #0a3d22,inset 0 2px 7px #ffffffaa;
+    font-size:13px;font-weight:900;color:#052414;line-height:1.15;text-shadow:0 1px 0 #d9ffe6}
+  #freeBtn:active{transform:translateY(4px);box-shadow:0 0 14px #39d98abb,0 2px 0 #0a3d22}
+  #freeBtn.hidden{display:none}
+  #freeBtn small{font-size:10px;font-weight:800}
   #coinBtn.hidden,#dropBtn.hidden,#raiseBtn.hidden{display:none}
   .sideBtn{width:56px;height:56px;border-radius:50%;border:2px solid #ffffff33;background:rgba(20,14,50,.85);font-size:24px;cursor:pointer;color:#fff}
   .sideBtn:active{transform:scale(.92)}
@@ -134,7 +142,8 @@
   <button class="sideBtn" id="bagBtn" title="Borsa infinita">🎒</button>
   <button id="coinBtn"><span>INSERISCI<br>MONETA<br>100₤</span></button>
   <button id="dropBtn" class="hidden">DISCI<br>↓</button>
-  <button id="raiseBtn" class="hidden">SU ⬆<br><span id="raiseCost">200₤</span></button>
+  <button id="raiseBtn" class="hidden">PRENDI ⬆<br><span id="raiseCost">200₤</span></button>
+  <button id="freeBtn" class="hidden" title="Rialza gratis (tasto R)">↺ RIALZA<br><small>gratis</small></button>
   <button class="sideBtn" id="shopBtn" title="Negozio">🛒</button>
   <button class="sideBtn" id="soundBtn" title="Audio">🔊</button>
 </div>
@@ -166,7 +175,7 @@
 <div id="startScreen">
   <h1>🦾 DaProd CLAW</h1>
   <p>🎰 <b>1 partita = 100₤</b> · ⏱️ <b>2 minuti</b> · 🦾 <b>2 risalite a pagamento</b> (200₤ · 500₤) — la <b>3ª da 1000₤</b> si sblocca nello shop con la Chiave 🔑.<br>
-  Inserisci la moneta, muovi il braccio con <b>frecce</b> o <b>trascinando il dito</b>, premi <b>DISCI ↓</b> e poi <b>SU ⬆</b> per tirare su: ogni premio finisce nel <b>bicchierone</b> 🥤 e nella <b>borsa infinita</b> 🎒. Esaurite le risalite → <b>GAME OVER</b>!</p>
+  Inserisci la moneta, muovi il braccio con <b>frecce</b> o <b>trascinando il dito</b>, premi <b>DISCI ↓</b>: la pinza scende e aspetta. <b>PRENDI ⬆</b> chiude e tira su (è la risalita a pagamento); se hai mirato male <b>↺ RIALZA</b> la riporta su <b>gratis</b> e riprovi finché c'è tempo. Ogni premio finisce nel <b>bicchierone</b> 🥤 e nella <b>borsa infinita</b> 🎒. Esaurite le risalite → <b>GAME OVER</b>!</p>
   <button id="playBtn">▶ GIOCA ORA</button>
 </div>
 <script type="module">
@@ -642,7 +651,26 @@ function coinInsertFX(){
 const dispC=document.createElement('canvas'); dispC.width=1024; dispC.height=256;
 const dispTex=new THREE.CanvasTexture(dispC); dispTex.colorSpace=THREE.SRGBColorSpace;
 const disp=new THREE.Mesh(new THREE.PlaneGeometry(4.5,1.12),new THREE.MeshBasicMaterial({map:dispTex}));
-disp.position.set(-.35,1.0,4.105); scene.add(disp);
+/* v0.9: il display sta SUL PIANO ORIZZONTALE davanti al vetro, su un leggio inclinato verso
+   chi gioca (prima era in verticale sul frontale). Il leggio è un cuneo: dietro alto, davanti basso. */
+{
+  const DZ0=3.0, DZ1=4.1, DY=1.6, HB=.24, HF=.02;          // cuneo basso: non copre il campo quando la camera scende
+  const sh=new THREE.Shape();
+  sh.moveTo(DZ0,DY); sh.lineTo(DZ1,DY); sh.lineTo(DZ1,DY+HF); sh.lineTo(DZ0,DY+HB); sh.lineTo(DZ0,DY);
+  const wg=new THREE.ExtrudeGeometry(sh,{depth:4.8,bevelEnabled:false});
+  wg.rotateY(-Math.PI/2);                                   // estruso lungo -x
+  const wedge=new THREE.Mesh(wg,new THREE.MeshStandardMaterial({color:0x1c1236,roughness:.45,metalness:.3}));
+  wedge.position.x=-.35+2.4; wedge.castShadow=wedge.receiveShadow=true; scene.add(wedge);
+  const tilt=Math.atan2(HB-HF,DZ1-DZ0), len=Math.hypot(HB-HF,DZ1-DZ0);
+  const nY=Math.cos(tilt), nZ=Math.sin(tilt);               // normale del leggio (su e verso chi gioca)
+  const cy=DY+(HB+HF)/2, cz=(DZ0+DZ1)/2;
+  disp.scale.y=len/1.12*.92;                                // il display riempie il leggio
+  disp.rotation.x=-Math.PI/2+tilt;
+  disp.position.set(-.35,cy+nY*.012,cz+nZ*.012);
+  const trim=new THREE.Mesh(new THREE.BoxGeometry(4.66,.03,len*.99),new THREE.MeshBasicMaterial({color:0xffd23e}));
+  trim.rotation.x=tilt; trim.position.set(-.35,cy-nY*.006,cz-nZ*.006); scene.add(trim);   // cornice oro
+}
+scene.add(disp);
 let dispAcc=0;
 function drawDisplay(){
   const x=dispC.getContext('2d');
@@ -673,36 +701,52 @@ const cLight=new THREE.PointLight(0xff5599,20,7); cLight.position.set(0,-.5,0); 
 const leg=box(.22,1,.22,0xdddddd,.9); leg.position.y=-.8; claw.add(leg);
 const pinch=new THREE.Group(); pinch.position.y=-1.35; claw.add(pinch);
 const fingers=[];
-/* DITA ARTICOLATE A DUE FALANGI: base + nocca → si PIEGANO SU LORO STESSE come una mano vera */
-const segUp=new THREE.CylinderGeometry(.030,.054,.52,14);   // falange (prox)
-const segFo=new THREE.CylinderGeometry(.026,.042,.46,14);   // falangina (dist)
-const tipGeo=new THREE.SphereGeometry(.058,14,10);          // polpastrello arrotondato
-const CH_A=chrome(0xffd23e,.1), CH_B=chrome(0xef9c00,.14);  // cromo vero (riflette l'env map)
-const N_F=9;
+/* PINZA VERA A 3 ARTIGLI (v0.9). Prima erano 9 aste sottili in cerchio che dondolavano:
+   sembrava uno scacciapensieri. Ora come nelle claw machine vere: un corpo centrale (motore)
+   e 3 artigli larghi e piatti, ognuno con due snodi, punta ricurva verso l'interno e gommino.
+   La presa la decide la distanza (magnetR), non la forma: cambiare la grafica non cambia le regole. */
+const CH_A=chrome(0xd9dee8,.22), CH_B=chrome(0xffd23e,.2);    // cromo chiaro + oro (riflettono l'env map)
+const BODY=new THREE.MeshStandardMaterial({color:0xff2d78,roughness:.35,metalness:.2});   // corpo rosa come il carrello
+const RUBBER=new THREE.MeshStandardMaterial({color:0x1e1a2b,roughness:.9});
+// oro satinato per gli artigli: il cromo a specchio rifletteva il buio e sembravano bastoncini neri
+const GOLD=new THREE.MeshStandardMaterial({color:0xffc933,metalness:.55,roughness:.3,emissive:0x3a2600});
+{
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(.12,.34,.24,24),CH_A); cap.position.y=.13; pinch.add(cap);
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,.3,28),BODY); body.position.y=-.14; body.castShadow=true; pinch.add(body);
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(.36,.04,10,32),CH_B); ring.rotation.x=Math.PI/2; ring.position.y=-.29; pinch.add(ring);
+  const plate=new THREE.Mesh(new THREE.CylinderGeometry(.3,.2,.1,24),CH_A); plate.position.y=-.34; pinch.add(plate);
+}
+const N_F=3;
+const armGeo=new THREE.BoxGeometry(.27,.7,.09);      // braccio: largo e piatto
+const hookGeo=new THREE.BoxGeometry(.23,.48,.09);    // punta ricurva
+const padGeo=new THREE.BoxGeometry(.25,.11,.16);     // gommino in punta
+const pinGeo=new THREE.CylinderGeometry(.05,.05,.26,12);   // perno degli snodi
 for(let i=0;i<N_F;i++){
-  const a=i/N_F*Math.PI*2;
-  const pivot=new THREE.Group();                                        // SNODO 1 = base del dito
-  pivot.position.set(Math.cos(a)*.32,0,Math.sin(a)*.32);
-  const up=new THREE.Mesh(segUp,i%2?CH_A:CH_B); up.castShadow=true; up.position.y=-.26; pivot.add(up);
-  const knuckle=new THREE.Group(); knuckle.position.y=-.52; pivot.add(knuckle);   // SNODO 2 = nocca
-  const fo=new THREE.Mesh(segFo,i%2?CH_A:CH_B); fo.castShadow=true; fo.position.y=-.23; knuckle.add(fo);
-  const tip=new THREE.Mesh(tipGeo,i%2?CH_A:CH_B); tip.position.y=-.47; tip.scale.set(1,.8,1.3); knuckle.add(tip);
-  pivot.scale.setScalar(i%2?1:.9);                                      // dita alterne = gabbia definita
+  const a=i/N_F*Math.PI*2+Math.PI/2;
+  const face=-a-Math.PI/2;                          // ruota la lamina: larghezza lungo la tangente
+  const pivot=new THREE.Group();                    // SNODO 1, sul piatto del corpo
+  pivot.position.set(Math.cos(a)*.26,-.36,Math.sin(a)*.26);
+  const pin1=new THREE.Mesh(pinGeo,CH_A); pin1.rotation.set(0,face,Math.PI/2); pivot.add(pin1);
+  const arm=new THREE.Mesh(armGeo,GOLD); arm.rotation.y=face; arm.position.y=-.35; arm.castShadow=true; pivot.add(arm);
+  const knuckle=new THREE.Group(); knuckle.position.y=-.7; pivot.add(knuckle);    // SNODO 2
+  const pin2=new THREE.Mesh(pinGeo,CH_A); pin2.scale.set(.9,.8,.9); pin2.rotation.set(0,face,Math.PI/2); knuckle.add(pin2);
+  const hook=new THREE.Mesh(hookGeo,GOLD); hook.rotation.y=face; hook.position.y=-.24; hook.castShadow=true; knuckle.add(hook);
+  const pad=new THREE.Mesh(padGeo,RUBBER); pad.rotation.y=face; pad.position.y=-.5; knuckle.add(pad);
   pivot.userData.idx=i; pivot.userData.dir=a; pivot.userData.knuckle=knuckle;
-  pivot.userData.tan=new THREE.Vector3(-Math.sin(a),0,Math.cos(a));     // asse di flessione (tangente)
+  pivot.userData.tan=new THREE.Vector3(-Math.sin(a),0,Math.cos(a));     // asse degli snodi (tangente)
   pinch.add(pivot); fingers.push(pivot);
 }
-/* v: 0 = spalancato, 1 = chiuso a uncino. Due snodi → curl vero, non una rotazione rigida */
+/* v: 0 = spalancata, 1 = chiusa. Il braccio ruota sullo snodo 1, la punta si piega sullo snodo 2 */
 function applyFingers(v,wob,tt){
   const V=THREE.MathUtils.clamp(v||0,0,1);
   for(let i=0;i<fingers.length;i++){
     const p=fingers[i];
-    const lag=THREE.MathUtils.clamp(V*1.16-i*.018,0,1);                 // cascata: ogni dito parte un istante dopo
-    const trem=wob?Math.sin((tt||0)*7+i*1.1)*.032*(1-lag*.5):0;         // micro-tremolio meccanico
-    const e=lag*lag*(3-2*lag)+trem;                                     // smoothstep = piega morbida
-    p.setRotationFromAxisAngle(p.userData.tan, .34-e*.79);              // falange: da spalancata a dentro
-    p.userData.knuckle.setRotationFromAxisAngle(p.userData.tan, .16-e*1.01);  // nocca: CURL su se stessa
-    p.position.y=-e*.06;                                                // uncina anche verso il basso
+    const lag=THREE.MathUtils.clamp(V*1.06-i*.03,0,1);                 // i 3 artigli quasi insieme
+    const trem=wob?Math.sin((tt||0)*7+i*2.1)*.018*(1-lag*.5):0;         // vibrazione del motore
+    const e=lag*lag*(3-2*lag)+trem;                                     // smoothstep = chiusura morbida
+    p.setRotationFromAxisAngle(p.userData.tan, .52-e*.7);               // braccio: da aperto a dentro
+    p.userData.knuckle.setRotationFromAxisAngle(p.userData.tan, .06-e*.98);   // punta: si piega verso il centro
+    p.position.y=-.36-e*.04;
   }
 }
 
@@ -1092,8 +1136,9 @@ function syncButtons(){
   const running=G.running&&!G.over;
   coin.classList.toggle('hidden',running);
   drop.classList.toggle('hidden',!(running&&G.phase==='idle'));
-  const canRaise=running&&G.phase==='down';
+  const canRaise=running&&(G.phase==='down'||G.phase==='bottom');
   raise.classList.toggle('hidden',!canRaise);
+  document.getElementById('freeBtn').classList.toggle('hidden',!canRaise);
   if(canRaise){
     const i=G.raises, unlocked=raiseUnlocked(i), price=raisePrice(i), mx=maxRaises();
     document.getElementById('raiseCost').textContent=
@@ -1118,7 +1163,7 @@ function startRound(){
   G.phase='idle'; G.intro=1.6; G.closeAmt=0; G.closeTarget=0;
   while(prizeCount()<QUAL.prizes) spawnPrize();   // il cabinato si RICOLMA a ogni round
   document.getElementById('gameOver').classList.add('hidden');
-  toast('🪙 '+fmtL(ROUND_COST)+'₤ inserite! ⏱️ '+mmss(G.timeLeft)+' · '+MAX_RAISES+' risalite',true);
+  toast('🪙 '+fmtL(ROUND_COST)+'₤ inserite! ⏱️ '+mmss(G.timeLeft)+' · '+maxRaises()+' risalite',true);
   syncButtons(); updateHUD();
   return true;
 }
@@ -1150,11 +1195,20 @@ function beginGrab(auto){
 }
 /* ⬆️ RISALITA MANUALE durante la discesa: 200 → 500 → 1000₤ */
 function doRaise(){
-  if(G.phase!=='down'||!G.running) return;
+  if((G.phase!=='down'&&G.phase!=='bottom')||!G.running) return;
   const i=G.raises;
   if(i>=maxRaises()){ SFX.fail(); toast('🚫 Risalite finite!'); return; }
   if(!raiseUnlocked(i)){ SFX.fail(); toast('🔒 La 3ª risalita (1000₤) si sblocca nello SHOP!',true); return; }
   beginGrab(false);
+}
+/* ↺ RIALZA GRATIS (v0.9): la pinza torna su vuota, niente lire, niente risalite consumate.
+   auto=true → nessuna scelta per BOTTOM_WAIT secondi, o tempo scaduto mentre era giù. */
+const BOTTOM_WAIT=5;
+function freeRaise(auto){
+  if(G.phase!=='down'&&G.phase!=='bottom') return;
+  G.phase='lift'; G.t=0; G.caught=null; G.closeTarget=0; G.lastRaisePrice=0; G.liftSfx=false;
+  toast(auto?'⏳ Nessuna scelta: rialzata GRATIS':'↺ Rialzata GRATIS — mira e riprova!');
+  syncButtons(); updateHUD();
 }
 function finishRound(){
   G.running=false;
@@ -1250,6 +1304,7 @@ let lastTick=Math.floor(gameTime());
 function animate(){
   requestAnimationFrame(animate);
   const dt=Math.min(clock.getDelta(),.05);
+  G.clock=(G.clock||0)+dt;                               // tempo di GIOCO (le prove misurano questo, non l'orologio)
   const t=clock.elapsedTime;
 
   if(G.phase==='idle'&&G.running){
@@ -1280,8 +1335,8 @@ function animate(){
     claw.rotation.x+=(tx-claw.rotation.x)*Math.min(1,dt*6);
     // pinza VIVA: vortice e "masticazione" delle dita
     if(G.phase==='idle'){
-      pinch.rotation.y+=dt*(G.running?.9:1.8);           // vortice più naturale
-      G.closeTarget=G.running?(.18+Math.sin(t*3.2)*.13):0;   // "respiro" delle dita (target, non forzato)
+      pinch.rotation.y=Math.sin(t*.7)*.25;               // v0.9: un'oscillazione lenta, non più la trottola
+      G.closeTarget=G.running?(.12+Math.sin(t*2.4)*.05):0;   // artigli appena socchiusi, pronti
     } else if(G.phase==='down'||G.phase==='lift'){
       pinch.rotation.y+=dt*.3;                             // leggero moto (non strano)
     }
@@ -1314,7 +1369,16 @@ function animate(){
         }
       });
     }
-    if(G.legLen>=DOWN_LEN-1e-3){ beginGrab(true); }   // ✅ TOLLERANZA: prima il confronto fp bloccava per sempre
+    if(G.legLen>=DOWN_LEN-1e-3){                      // ✅ TOLLERANZA: prima il confronto fp bloccava per sempre
+      G.phase='bottom'; G.t=0; syncButtons();         // v0.9: giù si FERMA, aperta, e aspetta la scelta
+      toast('⏸️ Giù! PRENDI ⬆ per chiudere, oppure ↺ RIALZA gratis');
+    }
+  }
+  else if(G.phase==='bottom'){                          // ferma sul fondo: PRENDI (paga) o RIALZA (gratis)
+    G.t+=dt;
+    G.closeTarget=.08+Math.sin(G.t*6)*.03;              // artigli aperti che fremono: "scegli!"
+    if(!G.running) freeRaise(true);                     // tempo scaduto mentre era giù: su gratis
+    else if(G.t>BOTTOM_WAIT) freeRaise(true);           // nessuna scelta: mai lire prese in automatico
   }
   else if(G.phase==='grab'){
     G.t+=dt;                                      // ⚡ TEMPO REALE: il rallentatore durava troppo e sembrava un blocco
@@ -1378,7 +1442,7 @@ function animate(){
     G.t+=dt;
     target.x+=(0-target.x)*dt*5; target.z+=(2.3-target.z)*dt*5;
     if(G.caught) holdFollow(G.caught.userData.body,G.caught.userData,pinchY());
-    if((Math.abs(claw.position.x)<.15&&Math.abs(claw.position.z-2.3)<.15)||G.t>5){
+    if((Math.abs(claw.position.x)<.15&&Math.abs(claw.position.z-2.3)<.15)||G.t>3){   // v0.9: mai più di 3 s
       G.closeTarget=0;                                       // molla la presa: le dita si RIAPRONO
       G.caught.userData.released=true;                       // non più riafferrabile/pushabile
       releaseHeld(G.caught,false);        // molla la presa: la FISICA lo fa cadere nel buco
@@ -1391,7 +1455,7 @@ function animate(){
     G.t+=dt;
     const f=G.fall;
     const fy=f&&f.userData.body?f.userData.body.position.y:(f?f.position.y:1);
-    if(!f||fy<-.1||G.t>6){
+    if(!f||fy<-.1||G.t>3.5){      // v0.9: fermo sul bordo del buco? dopo 3,5 s è VINTO (prima il watchdog lo faceva sparire)
       if(f){
         const b=f.userData.body; if(b&&world) world.removeBody(b);
         scene.remove(f);
@@ -1417,10 +1481,13 @@ function animate(){
     }
   }
 
-  // ============ WATCHDOG: MAI bloccare (reset di sicurezza dopo 5s) ============
+  // ============ WATCHDOG: MAI bloccare (ultima rete, dopo 8 s in una fase) ============
+  // v0.9: era 5 s, cioè PRIMA delle uscite di trasporto (5 s) e caduta (6 s): un premio lento
+  // a cadere faceva scattare l'autorestart e spariva senza essere contato. Ora le fasi hanno
+  // uscite proprie a 3-3,5 s e il watchdog resta solo per l'imprevisto. 'bottom' ha la sua attesa.
   if(G._ph!==G.phase){ G._ph=G.phase; G._phT=0; }
   G._phT=(G._phT||0)+dt;
-  if(G.phase!=='idle'&&G._phT>5){
+  if(G.phase!=='idle'&&G.phase!=='bottom'&&G._phT>8){
     if(G.caught){ releaseHeld(G.caught,true); G.caught=null; }
     if(G.fall){ const fb=G.fall.userData.body; if(fb&&world) world.removeBody(fb); scene.remove(G.fall); const fi=prizes.indexOf(G.fall); if(fi>=0) prizes.splice(fi,1); G.fall=null; }
     G.closeAmt=0; G.closeTarget=0; G.legLen=1;
@@ -1522,8 +1589,8 @@ function animate(){
     dPos=new THREE.Vector3(cx*.8, Math.max(3.0,pyW+1.4), 5.6);   // VICHISSIMO sullo scatto!
     dLook=new THREE.Vector3(cx*.9, Math.max(1.2,pyW-.5), cz*.8);
     dFov=38;
-  } else if(G.phase==='down'){
-    dPos=new THREE.Vector3(cx*.7, Math.max(3.3,pyW+1.9), 6.9);   // SCENDE con la pinza!
+  } else if(G.phase==='down'||G.phase==='bottom'){
+    dPos=new THREE.Vector3(cx*.7, Math.max(4.3,pyW+2.6), 5.7);   // SCENDE con la pinza, dall'alto: il display sul piano resta sotto
     dLook=new THREE.Vector3(cx*.85, Math.max(1.3,pyW-.3), cz*.7);
     dFov=46;
   } else if(G.phase==='lift'||G.phase==='carry'||G.phase==='fall'){
@@ -1619,6 +1686,7 @@ document.getElementById('coinBtn').onclick=()=>{           // 💰 PULSANTE MONE
 };
 document.getElementById('dropBtn').onclick=doDrop;
 document.getElementById('raiseBtn').onclick=doRaise;
+document.getElementById('freeBtn').onclick=()=>freeRaise(false);
 document.getElementById('bagBtn').onclick=()=>{ buildBag(); document.getElementById('bag').classList.remove('hidden'); };
 document.getElementById('bagClose').onclick=()=>document.getElementById('bag').classList.add('hidden');
 document.getElementById('goAgain').onclick=()=>{            // rigioca con una nuova moneta
@@ -1664,10 +1732,15 @@ document.getElementById('soundBtn').textContent=audioOn?'🔊':'🔇';
 addEventListener('keydown',e=>{
   if(e.key===' '||e.key==='Enter'){
     e.preventDefault();
-    if(G.phase==='down') doRaise();                    // in discesa il tasto grande = RISALITA
+    if(G.phase==='down'||G.phase==='bottom') doRaise();   // giù: Spazio/Invio = PRENDI (risalita)
     else if(G.phase==='idle') doDrop();
   }
+  if((e.key==='r'||e.key==='R')&&(G.phase==='down'||G.phase==='bottom')){ e.preventDefault(); freeRaise(false); }
 });
+
+/* aggancio per le prove automatiche (test/prove.mjs): solo lettura dello stato + le azioni dei pulsanti */
+window.__CLAW={G,S,prizes,claw,pinch,fingers,doDrop,doRaise,freeRaise,startRound,
+  get physOn(){return physOn;}, BOTTOM_WAIT};
 
 /* init */
 for(let i=0;i<QUAL.prizes;i++) spawnPrize();
