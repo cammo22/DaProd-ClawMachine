@@ -1,6 +1,6 @@
 # 🦾 DaProd Claw Machine
 
-Un **claw machine arcade 3D** giocabile direttamente nel browser: cabinato con **vetro fisico**, braccio meccanico a 3 dita **animato dinamicamente**, premi con **fisica vera** (cannon-es) che piovono e si impilano, camera cinematografica, missioni, combo, XP, negozio di potenziamenti e salvataggio locale.
+Un **claw machine arcade 3D** giocabile direttamente nel browser: cabinato con **vetro fisico**, **pinza a 3 artigli** come quelle vere, premi con **fisica vera** (cannon-es) che piovono e si impilano, camera cinematografica, missioni, combo, XP, negozio di potenziamenti e salvataggio locale.
 
 Nessuna build, nessuna dipendenza da installare: **un solo file `index.html`**.
 
@@ -18,8 +18,9 @@ Oppure apri `index.html` nel browser (doppio click) e premi **GIOCA ORA**.
 |---|---|---|
 | Inserisci la moneta (100₤) | Pulsante **INSERISCI MONETA** o `Invio` | Pulsante dorato **INSERISCI MONETA** |
 | Muovi il braccio | Frecce / `W A S D` | Trascina il dito sul campo |
-| Fai scendere il braccio | **DISCI ↓** | **DISCI ↓** |
-| Tira su (risalita a pagamento) | **SU ⬆** o `Spazio` | **SU ⬆** |
+| Fai scendere il braccio | **DISCI ↓** o `Spazio` | **DISCI ↓** |
+| Chiudi e tira su (risalita a pagamento) | **PRENDI ⬆** o `Spazio` | **PRENDI ⬆** |
+| Riporta su vuota, **gratis** | **↺ RIALZA** o `R` | **↺ RIALZA** |
 | Borsa / Negozio / Audio | 🎒 · 🛒 · 🔊 | 🎒 · 🛒 · 🔊 |
 
 ## 💰 Economia in LIRE ITALIANE ₤
@@ -40,9 +41,10 @@ Conversione reale: **1 € = 1.936,27 ₤**. Ogni importo è mostrato anche in e
 ## 🎮 Meccaniche
 
 - **Round a tempo** — **120 secondi** (+15s per livello *Più tempo*). Il tempo scorre solo dopo aver inserito la moneta.
-- **Scala: la prima discesa è inclusa nei 100₤**; ogni volta che il braccio risale paghi la tariffa crescente (200 → 500 → 1000₤).
+- **Scendi, poi scegli** (dalla v0.9) — la discesa è gratis e la pinza si **ferma sul fondo, aperta**. **PRENDI ⬆** chiude e tira su: è la risalita a pagamento (200 → 500 → 1000₤). **↺ RIALZA** la riporta su vuota **gratis**: se hai mirato male riprovi, finché c'è tempo. Senza scelta per 5 secondi rialza da sola, gratis: le lire non partono mai in automatico.
+- **Mai bloccata** — ogni fase ha un'uscita propria: il trasporto sopra il buco al massimo 3 s, un premio fermo sul bordo del buco dopo 3,5 s è vinto. Il watchdog (8 s) resta solo come ultima rete.
 - **Fisica vera (cannon-es)** — i premi cadono dall'alto, si impilano e rotolano; la pinza che scende li **spinge**; il premio trattenuto può **scivolare dalle dita** (le gemme ~5× più dei peluche; *Presa forte* riduce il rischio). La caduta nel buco è governata dalla fisica.
-- **Dita articolate a 2 falangi** — base + **nocca**: si spalancano e poi si **piegano su loro stesse** fino a chiudersi *fino al premio* (l'ampiezza finale dipende dal raggio del premio). Nessun rallentatore: lo scatto è in tempo reale, rapido e mai bloccante.
+- **Pinza a 3 artigli** (dalla v0.9) — corpo centrale rosa col motore e tre artigli d'oro larghi, ognuno con due snodi, punta ricurva e gommino: si aprono, poi si chiudono *fino al premio* (l'ampiezza finale dipende dal raggio del premio). Prima erano 9 aste sottili e sembravano uno scacciapensieri.
 - **Presa a probabilità** — `gripChance()` parte dal 42% (+18% sui peluche), ×0.55 sulle gemme, più difficile con campo pieno.
 - **Calamita** — il premio più vicino entro il raggio di presa è il candidato (reticolo di mira sul pavimento).
 - **Missioni 🎯** — obiettivi rotanti nell'HUD con ricompensa in lire.
@@ -54,7 +56,7 @@ Conversione reale: **1 € = 1.936,27 ₤**. Ogni importo è mostrato anche in e
 
 - **Bicchierone 3D** montato sul cabinato: ogni premio vinto ci **cade dentro**, si assesta nella pila e fa **ondeggiare gli altri** (scossone + luci). La targa 🏆 mostra il totale. Pila visibile fino a 24 pezzi (i più vecchi escono per non pesare).
 - **Borsa infinita** 🎒: tutti gli item raccolti **per sempre**, con quantità, valore in lire ed euro, premi in carriera e combo record. Il totale è salvato.
-- **Display LED 3D incorporato** nel pannello frontale del cabinato: saldo ₤ + euro, timer grande e risalite rimaste. L'HUD in alto è un **marquee arcade** con display LED, viti e pip delle risalite.
+- **Display LED 3D sul piano orizzontale** davanti al vetro, su un leggio inclinato verso chi gioca: saldo ₤ + euro, timer grande e risalite rimaste. L'HUD in alto è un **marquee arcade** con display LED, viti e pip delle risalite.
 
 ## 🎥 Camera dinamica
 
@@ -109,10 +111,20 @@ Progressi in `localStorage` con chiave **`daprod_claw_v2`**: lire, livello, XP, 
 
 ```
 DaProd-ClawMachine/
-├── index.html    # gioco completo (HTML + CSS + JS)
+├── index.html        # gioco completo (HTML + CSS + JS)
+├── test/prove.mjs    # prove automatiche in Chromium headless
 ├── README.md
 └── .gitignore
 ```
+
+## ✅ Prove automatiche
+
+```
+npm i --no-save playwright@1.62.0
+node test/prove.mjs
+```
+
+Gioca da solo in Chromium headless: moneta, discesa, fondo, RIALZA gratis, attesa senza scelta, PRENDI a pagamento (anche a mezz'aria), fine delle risalite, tempo scaduto sul fondo. Conta le lire e misura ogni fase del braccio in **tempo di gioco** (nel rendering software i fotogrammi sono pochi e il gioco scorre più piano dell'orologio). Salva due immagini in `test/.out/`. Serve la rete: three.js e cannon-es arrivano dalla CDN.
 
 ---
 
