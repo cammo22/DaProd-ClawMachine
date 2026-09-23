@@ -54,7 +54,7 @@
 <div id="game"></div>
 <div id="hud">
   <div class="chip">🪙 <span id="credits">0</span> <small>gettoni</small></div>
-  <div class="chip" id="timer">--</div>
+  <div class="chip" id="timer">🕹️ PRONTO</div>
   <div class="chip">🔥 <span id="streak">0</span> <small>combo</small></div>
   <div class="chip">⭐ Liv <span id="level">1</span></div>
   <div class="chip">🧸 <span id="prizes">0</span> <small>in gioco</small></div>
@@ -72,7 +72,7 @@
   <div class="panel">
     <h2>🛒 NEGOZIO</h2>
     <div class="item"><span>🦾 <b>Presa forte</b><br><small>+7% probabilità presa</small></span><button class="buy" data-up="grip">🪙 8</button></div>
-    <div class="item"><span>⏱️ <b>Più tempo</b><br><small>+5 secondi a partita</small></span><button class="buy" data-up="time">🪙 6</button></div>
+    <div class="item"><span>⚡ <b>Braccio rapido</b><br><small>+8% velocità discesa e risalita</small></span><button class="buy" data-up="time">🪙 6</button></div>
     <div class="item"><span>🧲 <b>Calamita</b><br><small>raggio di presa più ampio</small></span><button class="buy" data-up="magnet">🪙 10</button></div>
     <div class="item"><span>🍀 <b>Fortuna</b><br><small>più gemme e più valore</small></span><button class="buy" data-up="lucky">🪙 12</button></div>
     <button class="closeX" id="shopClose">CHIUDI</button>
@@ -135,17 +135,36 @@ function save(){ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }
 function load(){ try{ const d=JSON.parse(localStorage.getItem(SAVE_KEY)); if(d) Object.assign(S,d,{up:Object.assign(S.up,d.up||{})}); }catch(e){} }
 load();
 
-const GRIP_BASE=0.42, TIME_BASE=25, MAGNET_BASE=1.4, LUCKY_BASE=1.0;
+const GRIP_BASE=0.42, MAGNET_BASE=1.4, LUCKY_BASE=1.0;
 const gripChance=()=>Math.min(.92, GRIP_BASE + S.up.grip*.07);
-const gameTime =()=>TIME_BASE + S.up.time*5;
+const speedMul  =()=>1 + S.up.time*.08;        // ⚡ Braccio rapido
 const magnetR  =()=>MAGNET_BASE + S.up.magnet*.35;
 const luckyMul =()=>LUCKY_BASE + S.up.lucky*.4;
 
 /* ================= THREE SETUP ================= */
-const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+const MAX_DPR=1.5;                                    // cap DPR: la GPU non va in crisi
+renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,MAX_DPR));
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 document.getElementById('game').appendChild(renderer.domElement);
+/* ===== QUALITÀ AUTOMATICA: se rallenta si alleggerisce da solo (mai blocchi) ===== */
+let quality=2, fpsAcc=0, fpsN=0, fpsClean=0;
+function autoQuality(dt){
+  fpsAcc+=dt; fpsN++;
+  if(fpsAcc<1) return;
+  const fps=fpsN/fpsAcc; fpsAcc=0; fpsN=0;
+  if(fps<38 && quality>0){
+    quality--;
+    if(quality===1){ renderer.shadowMap.enabled=false; spot.castShadow=false; }
+    if(quality===0){ renderer.setPixelRatio(1); }
+  } else if(fps>57 && quality<2){
+    fpsClean++;
+    if(fpsClean>4){ quality++; fpsClean=0;
+      if(quality>=1){ renderer.shadowMap.enabled=true; spot.castShadow=true; }
+      if(quality>=2) renderer.setPixelRatio(Math.min(devicePixelRatio,MAX_DPR));
+    }
+  } else fpsClean=0;
+}
 
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x140a2e);
@@ -169,7 +188,7 @@ const neon3=new THREE.PointLight(0xffd23e,50,25); neon3.position.set(0,4.5,3.5);
 
 /* campo stelle di sfondo */
 function makeStars(){
-  const n=350, pos=new Float32Array(n*3), col=new Float32Array(n*3);
+  const n=240, pos=new Float32Array(n*3), col=new Float32Array(n*3);
   const palette=[[1,1,1],[.6,.85,1],[1,.6,.85],[1,.85,.4]];
   for(let i=0;i<n;i++){
     const r=18+Math.random()*22, th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1);
@@ -219,7 +238,7 @@ for(let i=0;i<5;i++){
   tube.position.set(0,8.5,-2-i*5); scene.add(tube);
 }
 // polvere sospesa (parallax di profondità)
-const dustN=140, dustPos=new Float32Array(dustN*3);
+const dustN=80, dustPos=new Float32Array(dustN*3);
 for(let i=0;i<dustN;i++){ dustPos[i*3]=(Math.random()-.5)*40; dustPos[i*3+1]=Math.random()*9; dustPos[i*3+2]=2-Math.random()*30; }
 const dustGeo=new THREE.BufferGeometry(); dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPos,3));
 const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:0xaaccff,size:.06,transparent:true,opacity:.7}));
@@ -318,11 +337,11 @@ giftBox(-2.75,-2.15,0xff3355,.95);
 giftBox(2.75,-2.15,0x31d158,.95);
 giftBox(0,-2.3,0x9b5cff,.75);
 function glass(w,h,d){
-  // VETRO VERO: transmission + ior + clearcoat = si vede attraverso con riflessi
+  // vetro LEGGERO: trasparenza + riflessi clearcoat (senza transmission: era pesantissima)
   const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),
-    new THREE.MeshPhysicalMaterial({color:0xdff0ff, metalness:0, roughness:.04,
-      transmission:.92, thickness:.08, ior:1.45, transparent:true,
-      clearcoat:1, clearcoatRoughness:.03, reflectivity:.6}));
+    new THREE.MeshPhysicalMaterial({color:0xcfe6ff, metalness:.05, roughness:.05,
+      transparent:true, opacity:.16, clearcoat:1, clearcoatRoughness:.03,
+      reflectivity:.7, side:THREE.DoubleSide, depthWrite:false}));
   m.castShadow=false; m.receiveShadow=false; return m;
 }
 const glassL=glass(.15,7,5.4); glassL.position.set(-3.8,4.0,0); cabinet.add(glassL);
@@ -367,30 +386,31 @@ sticks.position.set(0,2.6,-2.66); scene.add(sticks);
 // binario FISSO sul tetto (non si muove col braccio)
 const railBeam=box(7.9,.2,.6,0x6655aa,.8); railBeam.position.set(0,7.05,0); scene.add(railBeam);
 const claw=new THREE.Group(); claw.position.y=6.9; scene.add(claw);   // ALTO: percorre tutto il cabinato
-const carriage=box(1.1,.5,.9,0xff2d78,.8); claw.add(carriage);
+const carriage=box(1.35,.6,1.05,0xff2d78,.8); claw.add(carriage);
 const armZ=box(.14,.14,1,0xffd23e,.8); claw.add(armZ);               // braccio di raccordo col binario
 const cLight=new THREE.PointLight(0xff5599,20,7); cLight.position.set(0,-.5,0); claw.add(cLight);
-const leg=box(.22,1,.22,0xdddddd,.9); leg.position.y=-.8; claw.add(leg);
+const leg=box(.3,1,.3,0xdddddd,.9); leg.position.y=-.8; claw.add(leg);
 const pinch=new THREE.Group(); pinch.position.y=-1.35; claw.add(pinch);
 const fingers=[];
-const fingerGeo=new THREE.CylinderGeometry(.035,.065,1.15,8);
+const fingerGeo=new THREE.CylinderGeometry(.045,.085,1.3,8);
 for(let i=0;i<9;i++){                                   // 9 DENTI = gabbia vera
   const pivot=new THREE.Group(), a=i/9*Math.PI*2;
   const f=new THREE.Mesh(fingerGeo,new THREE.MeshStandardMaterial({color:i%2?0xffd23e:0xef9c00,metalness:.9,roughness:.3}));
-  f.castShadow=true; f.position.y=-.575;
+  f.castShadow=true; f.position.y=-.65;
   f.scale.y=i%2?1:.86;                                  // denti alterni = ben definiti
   pivot.add(f);
-  pivot.position.set(Math.cos(a)*.3,0,Math.sin(a)*.3);
+  pivot.position.set(Math.cos(a)*.34,0,Math.sin(a)*.34);
   pivot.userData.dir=a; pivot.userData.idx=i;
   pivot.userData.tan=new THREE.Vector3(-Math.sin(a),0,Math.cos(a)); // asse tangente: chiude verso l'interno
   pinch.add(pivot); fingers.push(pivot);
 }
-function applyFingers(v,wob,tt){ // 0 aperto → 1 chiuso: curva profonda + onda + tremolio
+function applyFingers(v,wob,tt){ // 0 aperto → 1 chiuso: curva vera + onda + tremolio
   fingers.forEach((p,idx)=>{
-    const eff=Math.max(0,Math.min(1,v*1.35-idx*.045))            // cascata: ogni dente ritarda
-             +(wob?Math.sin((tt||0)*6+idx*.9)*.07:0);            // tremolio vivo per dente
-    p.setRotationFromAxisAngle(p.userData.tan, -eff*1.4);        // PIEGA FORTE: si chiudono su loro stessi
-    p.position.y=-eff*.1;                                        // gancio: scendono anche verso il basso
+    const eff=Math.max(0,Math.min(1,v*1.35-idx*.045))
+             +(wob?Math.sin((tt||0)*6+idx*.9)*.045:0);
+    p.rotation.set(0,0,0);
+    p.rotateOnAxis(p.userData.tan, -Math.min(1,eff)*1.55); // piega su se stesso, non solo vibra
+    p.position.y=-Math.max(0,eff)*.12;                    // gancio verso il basso
   });
 }
 
@@ -412,11 +432,26 @@ function pickPrize(){
   for(const p of PRIZES){ r-=p.w; if(r<=0) return p; }
   return PRIZES[0];
 }
+const texCache={};                                    // 1 texture per emoji: niente memory churn
 function emojiTexture(e){
+  if(texCache[e]) return texCache[e];
   const c=document.createElement('canvas'); c.width=c.height=256; const x=c.getContext('2d');
   x.font='190px serif'; x.textAlign='center'; x.textBaseline='middle';
   x.fillText(e,128,150);
-  return new THREE.CanvasTexture(c);
+  const t=new THREE.CanvasTexture(c);
+  texCache[e]=t; return t;
+}
+const spriteCache={};
+function spriteMat(e){
+  if(spriteCache[e]) return spriteCache[e];
+  const m=new THREE.SpriteMaterial({map:emojiTexture(e),transparent:true,depthWrite:false});
+  spriteCache[e]=m; return m;
+}
+const gemMatCache={};
+function gemMat(prize){
+  if(gemMatCache[prize.color]) return gemMatCache[prize.color];
+  const m=new THREE.MeshStandardMaterial({color:prize.color,emissive:prize.color,emissiveIntensity:.9,metalness:.4,roughness:.15});
+  gemMatCache[prize.color]=m; return m;
 }
 const prizes=[];
 const FIELD={minX:-3.1,maxX:3.1,minZ:-2.2,maxZ:1.6};
@@ -424,12 +459,11 @@ function spawnPrize(prize){
   prize=prize||pickPrize();
   let m;
   if(prize.kind==='gem'){
-    m=new THREE.Mesh(new THREE.OctahedronGeometry(prize.r),
-      new THREE.MeshStandardMaterial({color:prize.color,emissive:prize.color,emissiveIntensity:.9,metalness:.4,roughness:.15}));
-    m.castShadow=true;
+    m=new THREE.Mesh(new THREE.OctahedronGeometry(prize.r),gemMat(prize));
+    m.castShadow=false;                            // ombre sui premi: costo inutile
   } else {
-    // peluche = sprite emoji grande e colorato, sempre inquadrato
-    m=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTexture(prize.emoji),transparent:true,depthWrite:false}));
+    // peluche = sprite emoji grande e colorato, sempre inquadrato (materiali in cache)
+    m=new THREE.Sprite(spriteMat(prize.emoji));
     const s=prize.r*2.5; m.scale.set(s,s,1);
   }
   m.userData.prize=prize;
@@ -464,7 +498,7 @@ const G={
   phase:'idle',      // idle | down | grab | lift | carry | fall | back
   t:0, timeLeft:0, running:false,
   streak:0, caught:null, fall:null, legLen:1, closeAmt:0,
-  shake:0, intro:0, fovKick:0
+  shake:0, intro:0, fovKick:0, paid:false
 };
 const target={x:0,z:.4};
 const CLAW_LIMIT={minX:-3.0,maxX:3.0,minZ:-2.0,maxZ:2.3};
@@ -535,39 +569,53 @@ addEventListener('pointermove',e=>{
 addEventListener('pointerup',()=>moveTouch=null);
 
 /* ================= SEQUENZA BRACCIO ================= */
-function startRound(){
-  if(G.phase!=='idle'||G.running) return false;
-  if(S.credits<1){                               // ⚠️ controlli PRIMA, addebito DOPO (mai gettoni mangiati)
-    SFX.fail();
-    toast('🪙 SERVONO GETTONI! Premi 🎁 per il bonus gratis',true);
-    const bb=document.getElementById('bonusBtn');
-    bb.style.transition='transform .15s'; bb.style.transform='scale(1.35)';
-    setTimeout(()=>bb.style.transform='',600);
-    return false;
-  }
-  S.credits-=1; save();                          // gettone consumato UNA volta, solo qui
-  G.running=true; G.timeLeft=gameTime();
-  G.phase='idle'; G.intro=1.6;
-  while(prizeCount()<50) spawnPrize();          // il cabinato si RICOLMA a ogni round
-  toast('🪙 Gettone inserito! ⏱️ Hai '+G.timeLeft+' secondi!');
+function startRound(){                     // ingresso in sala: GRATIS, il gettone paga il LANCIO
+  if(G.running) return true;
+  G.running=true; G.phase='idle'; G.intro=1.6;
+  while(prizeCount()<38) spawnPrize();     // il cabinato si RICOLMA
+  toast('🕹️ Premi il tasto rosso: 1 🪙 per ogni lancio!');
   updateHUD();
   return true;
 }
 function doDrop(){
-  if(!G.running){ startRound(); return; }   // primo tocco = inserisci round
-  if(G.phase!=='idle') return;
+  if(!G.running){ startRound(); return; }        // prima volta: entra in sala (gratis)
+  if(G.phase!=='idle') return;                   // braccio in azione: nessun doppio addebito
+  if(!G.paid){                                   // 💰 il gettone si scala SOLO qui, dopo TUTTI i controlli
+    if(S.credits<1){
+      SFX.fail();
+      toast('🪙 SERVONO GETTONI! Premi 🎁 per il bonus gratis',true);
+      const bb=document.getElementById('bonusBtn');
+      bb.style.transition='transform .15s'; bb.style.transform='scale(1.35)';
+      setTimeout(()=>bb.style.transform='',600);
+      return;                                    // non si scala nulla: il gettone NON viene mangiato
+    }
+    S.credits-=1; G.paid=true; S.charges=(S.charges||0)+1; save(); updateHUD();
+  }
   SFX.drop(); SFX.dive();
   G.snapDone=false; G.liftSfx=false; G.swing=0;
   G.phase='down'; G.t=0;
   document.getElementById('dropBtn').disabled=true;
 }
-function finishRound(){
-  G.running=false;
-  document.getElementById('dropBtn').disabled=(G.phase!=='idle');
-  if(G.phase==='idle'){
-    document.getElementById('timer').textContent='--';
-    toast('⏰ ROUND FINITO — premi DISCI per giocare!');
+/* (il vecchio "round a tempo" è stato sostituito: 1 gettone = 1 lancio, nessuna scadenza) */
+function recoverArm(msg){
+  if(G.caught&&G.caught.userData){
+    const b=G.caught.userData.body;
+    if(b){ b.type=CANNON.Body.DYNAMIC; b.wakeUp&&b.wakeUp(); }
+    G.caught.userData.held=false; G.caught=null;
   }
+  if(G.fall&&G.fall.userData){
+    const fb=G.fall.userData.body;
+    if(fb&&world) world.removeBody(fb);
+    scene.remove(G.fall);
+    const fi=prizes.indexOf(G.fall); if(fi>=0) prizes.splice(fi,1);
+    G.fall=null;
+  }
+  G.closeAmt=0; G.legLen=1; G.t=0; G.paid=false;
+  leg.scale.y=1; leg.position.y=-.8; pinch.position.y=-1.35;
+  G.phase='idle';
+  document.getElementById('dropBtn').disabled=false;
+  if(msg){ SFX.fail(); toast(msg); }
+  updateHUD();
 }
 function win(prize){
   const mul=prize.kind==='gem'?luckyMul():1;
@@ -641,7 +689,7 @@ function snapFX(){
   SFX.clank();
 }
 const clock=new THREE.Clock();
-let lastTick=Math.floor(gameTime());
+/* (nessun timer di round: il chip mostra lo stato del braccio) */
 function animate(){
   requestAnimationFrame(animate);
   const dt=Math.min(clock.getDelta(),.05);
@@ -686,12 +734,12 @@ function animate(){
   applyFingers(G.closeAmt,true,t);
 
   const pinchY=()=>claw.position.y+pinch.position.y;        // quota mondiale della pinza
-  if(physOn) world.step(1/60,dt,3);
+  if(physOn) world.step(1/60,Math.min(dt,.033),2);          // 2 sotto-passi: fisica stabile e leggera
 
   if(G.phase==='down'){
     // discesa con EASE: veloce in alto, LENTA e drammatica sull'approccio finale
-    const targetLen=4.9, rem=targetLen-G.legLen;
-    G.legLen=Math.min(targetLen,G.legLen+dt*(rem>1.5?4.4:1.7));
+    const targetLen=4.78, rem=targetLen-G.legLen;
+    G.legLen=Math.min(targetLen,G.legLen+dt*(rem>1.5?4.4:1.7)*speedMul());
     leg.scale.y=G.legLen; leg.position.y=-.3-G.legLen/2;
     pinch.position.y=-.35-G.legLen;
     // la pinza che scende SPINGE i premi (interazione fisica vera)
@@ -707,14 +755,13 @@ function animate(){
         }
       });
     }
-    if(pinchY()<=1.65){ G.phase='grab'; G.t=0; G.closeAmt=0; snapFX(); }   // 💥 SCATTO da zero
+    if(G.legLen>=4.76){ G.phase='grab'; G.t=0; G.closeAmt=0; snapFX(); }   // 💥 SCATTO (confronto su legLen: niente errori float)
   }
   else if(G.phase==='grab'){
-    G.t+=dt*.8;                                   // rallentatore APPENA accennato (MAI blocchi)
-    G.shake=Math.max(G.shake,.04);                // vibrazione sottile durante lo scatto
-    G.closeAmt=Math.min(1,G.t*3.4);
+    G.t+=dt;                                      // niente rallentatore che blocca il flusso
+    G.closeAmt=Math.min(1,G.t*4.2);
     if(!G.snapDone&&G.closeAmt>=1){ G.snapDone=true; SFX.clank(); }
-    if(G.t>.3){
+    if(G.t>.22){
       const c=claw.position, mr=magnetR();
       let best=null,bd=1e9;
       prizes.forEach(p=>{
@@ -735,8 +782,8 @@ function animate(){
     G.t+=dt;
     if(!G.liftSfx){ G.liftSfx=true; SFX.rise(); }
     // risalita con EASE: parte dolce (il premio resta fermo), poi accelera fino in cima
-    const up=(4.9-G.legLen)/3.9;
-    G.legLen=Math.max(1,G.legLen-dt*(1.5+2.4*Math.min(1,up)));
+    const up=(4.78-G.legLen)/3.78;
+    G.legLen=Math.max(1,G.legLen-dt*(1.5+2.4*Math.min(1,up))*speedMul());
     leg.scale.y=G.legLen; leg.position.y=-.3-G.legLen/2;
     pinch.position.y=-.35-G.legLen;
     if(G.caught){
@@ -784,7 +831,14 @@ function animate(){
     G.t+=dt;
     const f=G.fall;
     const fy=f&&f.userData.body?f.userData.body.position.y:(f?f.position.y:1);
-    if(!f||fy<-.1||G.t>6){
+    // se il premio si incastra sul bordo, viene indirizzato dolcemente nel buco (mai attese lunghe)
+    if(f&&f.userData.body&&G.t>1&&fy>.6){
+      const b=f.userData.body; b.wakeUp();
+      b.velocity.x+=(0-b.position.x)*6*dt;
+      b.velocity.z+=(2.3-b.position.z)*6*dt;
+      b.velocity.y-=2*dt;
+    }
+    if(!f||fy<-.1||G.t>4){
       if(f){
         const b=f.userData.body; if(b&&world) world.removeBody(b);
         scene.remove(f);
@@ -801,24 +855,15 @@ function animate(){
     pinch.position.y=-.35-G.legLen;
     G.closeAmt=Math.max(0,G.closeAmt-dt*1.5);
     if(G.t>1.2){
-      G.phase='idle'; document.getElementById('dropBtn').disabled=false;
-      if(!G.running){ document.getElementById('timer').textContent='--'; toast('⏰ ROUND FINITO — premi DISCI per giocare!'); }
+      G.phase='idle'; G.paid=false;                     // fine lancio: il prossimo costa 1 gettone
+      document.getElementById('dropBtn').disabled=false;
     }
   }
 
-  // ============ WATCHDOG: MAI bloccare (reset di sicurezza dopo 12s) ============
+  // ============ WATCHDOG: MAI bloccare (reset di sicurezza dopo 6s) ============
   if(G._ph!==G.phase){ G._ph=G.phase; G._phT=0; }
   G._phT=(G._phT||0)+dt;
-  if(G.phase!=='idle'&&G._phT>12){
-    if(G.caught){ const b=G.caught.userData.body; if(b){ b.type=CANNON.Body.DYNAMIC; b.wakeUp&&b.wakeUp(); } G.caught.userData.held=false; G.caught=null; }
-    if(G.fall){ const fb=G.fall.userData.body; if(fb&&world) world.removeBody(fb); scene.remove(G.fall); const fi=prizes.indexOf(G.fall); if(fi>=0) prizes.splice(fi,1); G.fall=null; }
-    G.closeAmt=0; G.legLen=1;
-    leg.scale.y=1; leg.position.y=-.8; pinch.position.y=-1.35;
-    G.phase='idle'; G._phT=0;
-    document.getElementById('dropBtn').disabled=false;
-    SFX.fail(); toast('⚙️ Autorestart — si continua a giocare!');
-    updateHUD();
-  }
+  if(G.phase!=='idle'&&G._phT>6) recoverArm('⚙️ Autorestart — si continua a giocare!');
 
   // reticolo di mira: segue il braccio, mostra il raggio di presa
   retic.visible=(G.phase==='idle');
@@ -836,7 +881,7 @@ function animate(){
     }
   });
 
-  if(prizeCount()<45 && Math.random()<dt*4) spawnPrize();   // cabinato sempre RICOLMO
+  if(prizeCount()<32 && Math.random()<dt*3) spawnPrize();   // cabinato sempre RICOLMO
 
   neon1.position.set(Math.cos(t*1.6)*3.6,6.2,Math.sin(t*1.6)*2.6-0.5);   // discoteca!
   neon2.position.set(Math.cos(t*1.6+Math.PI)*3.6,6.2,Math.sin(t*1.6+Math.PI)*2.6-0.5);
@@ -897,21 +942,21 @@ function animate(){
     S._lastFree=Date.now(); S.credits+=5; save(); updateHUD();
     SFX.coin(); toast('🪙 +5 gettoni gratis! (mai blocchi)',true);
   }
-  if(G.running&&G.phase!=='over'){
-    G.timeLeft-=dt;
-    const s=Math.max(0,Math.ceil(G.timeLeft));
+  // chip di stato: nessun timer che scade, quindi il gettone non si perde MAI
+  {
     const el=document.getElementById('timer');
-    el.textContent=s+'s'; el.classList.toggle('low',s<=5);
-    if(s!==lastTick&&s<=5&&s>0){ SFX.tick(); lastTick=s; }
-    if(G.timeLeft<=0){ toast('⏰ Tempo finito!',true); finishRound(); }
+    const txt={idle:(G.paid?'✊ LANCIO PAGATO':'🕹️ GIOCA 1🪙'),down:'⬇️ DISCESA',grab:'✊ PRESA!',
+               lift:'⬆️ RISALITA',carry:'➡️ AL BUCO',fall:'🎁 PREMIO!',back:'↩️ RITORNO'}[G.phase]||'🕹️ PRONTO';
+    if(el.textContent!==txt) el.textContent=txt;
   }
 
   // etichetta pulsante: mostra il costo quando puoi giocare
   {
     const db=document.getElementById('dropBtn');
-    const want=(!G.running&&G.phase==='idle')?'GIOCA<br>1 🪙':'DISCI<br>↓';
+    const want=(G.phase==='idle'&&!G.paid)?'GIOCA<br>1 🪙':'DISCI<br>↓';
     if(db.innerHTML!==want) db.innerHTML=want;
   }
+  autoQuality(dt);                                      // qualità automatica
   renderer.render(scene,camera);
 }
 function pickChance(pr){
@@ -962,7 +1007,9 @@ audioOn=S.sound!==false;
 document.getElementById('soundBtn').textContent=audioOn?'🔊':'🔇';
 
 /* init */
-for(let i=0;i<55;i++) spawnPrize();
+for(let i=0;i<42;i++) spawnPrize();
+/* hook di debug/test: permette ai test automatici di ispezionare lo stato */
+window.__CLAW={S,G,prizes,fingers,get physOn(){return physOn;},doDrop,startRound,recoverArm,prizeCount,claw,pinch,magnetR};
 updateHUD();
 document.getElementById('timer').textContent='--';
 addEventListener('resize',()=>{

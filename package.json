@@ -1,0 +1,14 @@
+{
+  "name": "daprod-claw-machine",
+  "version": "0.8.0",
+  "private": true,
+  "description": "Claw machine arcade 3D in un singolo index.html (Three.js + cannon-es)",
+  "type": "module",
+  "scripts": {
+    "test": "node test/verifica.mjs",
+    "start": "npx --yes serve . -l 8080"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.49.0"
+  }
+}
