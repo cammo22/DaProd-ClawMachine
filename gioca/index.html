@@ -537,7 +537,7 @@
   </div>
 </div>
 
-<!-- Le Lire DaProd: il portafoglio unico dei giochi DaProd (vedi daprod-lira.js). -->
+<!-- Le Lire DaProd: il ponte con la sala giochi della DaProd Suite. Fuori dalla suite non fa niente. -->
 <script src="daprod-lira.js"></script>
 <script type="importmap">
 {
@@ -2876,15 +2876,11 @@ posaCamera(1, true);
 preparaPost();
 requestAnimationFrame((t) => { ultimo = t; requestAnimationFrame(ciclo); $('caricamento').classList.add('via'); });
 
-// Le Lire DaProd: la partita fatta qui si stacca in lire, e le lire si
-// spendono per ricaricare. Dentro la DaProd Suite il conto lo tiene la sala
-// giochi; sul sito il browser, diviso con gli altri giochi DaProd.
+// Le Lire DaProd: solo dentro la sala giochi della DaProd Suite la partita
+// fatta qui si stacca in lire. Qui sul sito e nelle app daprod-lira.js non fa
+// niente, e il gioco e' la sua demo.
 if (window.DaProdLira && MODO === 'gioco') DaProdLira.init({
   gioco: 'claw',
-  // Nella Claw i bordi sono tutti occupati (vetrina, officina, PRENDI): il
-  // portafoglio e' il tondo sotto al marchio, sul telefono e sul computer.
-  tondo: true,
-  telefono: { top: '70px', left: '10px' },
   ricarica: { detto: '+L.3.000 per le prese', dai: () => { stato.lire += 3000; aggiornaHUD(); daSalvare = true; avviso('🦾 Ricarica DaProd: +' + lire(3000), 'cia'); } },
 });
 

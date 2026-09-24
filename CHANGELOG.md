@@ -4,21 +4,15 @@ Tutte le versioni notevoli del gioco. Le date sono in formato AAAA-MM-GG.
 Ogni versione pubblicata ha anche una [release GitHub](https://github.com/cammo22/DaProd-ClawMachine/releases)
 con le app per Android, Windows e Mac, e va online su [GitHub Pages](https://cammo22.github.io/DaProd-ClawMachine/) subito dopo il push.
 
-## [1.1.0] — 2026-09-24 · Le Lire DaProd: un portafoglio per tutti i giochi 💶
+## [1.1.0] — 2026-09-24 · Il ponte con la sala giochi della DaProd Suite 💶
 
-### 💶 Le Lire DaProd: un portafoglio solo per tutti i giochi DaProd
-- **Le Lire DaProd** (`daprod-lira.js`): lo stesso portafoglio nella Coin Dozer, nella Claw Machine e in
-  Neon Partenope. Stanno tutti su `cammo22.github.io`, quindi il browser tiene **un saldo solo**: le lire
-  staccate in un gioco si spendono negli altri.
-- **La partita e lo stacco**: quello che vinci nel gioco fa **punti**. Quando vuoi smettere premi **Stacca**
-  e i punti diventano lire, alla **quotazione** di adesso, per la tua fetta (15%). Al massimo L.3.000 al
-  giorno: il resto della partita resta per domani.
-- **La Borsa della Lira**: la quotazione sale quando si spende (le ricariche) e scende quando si incassa
-  (gli stacchi), con un'onda lenta uguale per tutti. Staccare adesso o aspettare è parte del gioco.
-- **Ricarica** con le Lire: un gettone da L.100 ti dà **L.3.000 per le prese**.
-- **Dentro la DaProd Suite** il gioco sta nella sala giochi, e il portafoglio è quello vero del computer:
-  lì le cose grosse (shiny, zone nuove, prese buone) ti danno **carte** da giocare nella slot delle combinazioni.
-- Il portafoglio è la barra in basso (sul telefono il tondo **₤**): toccala per vedere Borsa, fetta e tetto.
+- **Dentro la [DaProd Suite](https://github.com/cammo22/DaProdSuite)** la Claw Machine sta nella sala giochi:
+  quello che prendi fa **punti della partita**, e quando stacchi diventano **Lire DaProd** alla quotazione della
+  Borsa. Shiny, zone nuove e prese buone ti danno **carte** da giocare nella slot delle combinazioni.
+- **Qui sul sito e nelle app** il gioco resta la sua demo: `gioca/daprod-lira.js` fuori dalla suite non fa niente.
+  E nella suite, se il computer DaProd non risponde, si gioca lo stesso.
+- Le prove automatiche non aspettano più che il tasto GIOCA sia «fermo»: sul server di GitHub, con la grafica in
+  software, non lo sembrava mai.
 
 ## [1.0.0] — 2026-09-23 · Il remake: la Grande Vasca dei modellini 🦾✨
 
