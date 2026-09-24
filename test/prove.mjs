@@ -189,7 +189,10 @@ console.log('\n== COMPUTER ==');
   const sciv = await page.evaluate(() => {
     const C = CLAW; C.stato.lire = 5000; C.FORZA.presa = true; C.FORZA.scivola = true;
     const s0 = C.stato.st.scivolati, v0 = C.stato.st.vuote;
-    const r = __presa(-1, 0); C.FORZA.presa = false; C.FORZA.scivola = false;
+    // Si mira a un modellino vero: un punto fisso a volte e' vuoto (il mucchio
+    // si sposta con le prese di prima) e la pinza non ha niente da far scivolare.
+    const b = C.oggetti().filter(o => o.zona === 0 && o.stato === 'campo' && !C.sopraBuca(o.x, o.z, 0)).sort((a, c) => (c.y - a.y))[0];
+    const r = __presa(b.x, b.z); C.FORZA.presa = false; C.FORZA.scivola = false;
     return { sc: C.stato.st.scivolati - s0, vuote: C.stato.st.vuote - v0, fasi: r.fasi };
   });
   T('un modellino può scivolare dalla pinza e ricade nella vasca', sciv.sc >= 1 && sciv.vuote === 1, JSON.stringify(sciv));
