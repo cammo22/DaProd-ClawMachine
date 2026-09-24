@@ -537,6 +537,8 @@
   </div>
 </div>
 
+<!-- Le Lire DaProd: il ponte con la sala giochi della DaProd Suite. Fuori dalla suite non fa niente. -->
+<script src="daprod-lira.js"></script>
 <script type="importmap">
 {
   "imports": {
@@ -549,7 +551,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-const VERSIONE = 'v1.0.0';
+const VERSIONE = 'v1.1.0';
 const $ = (id) => document.getElementById(id);
 const PARAMETRI = new URLSearchParams(location.search);
 // gioco = la partita vera; demo = la macchina gioca da sola (sfondo della home); vetrina = sfilata dei modellini
@@ -2026,6 +2028,11 @@ function vinci(o) {
   rec.g = Math.max(rec.g, o.g, 1);
   const premio = Math.round(M.valore * G.mult * moltLire());
   stato.lire += premio; stato.st.vinti += premio; stato.st.catturati++;
+  // Il premio fa anche punti della partita DaProd; uno shiny e' una cosa grossa.
+  if (window.DaProdLira && MODO === 'gioco') {
+    DaProdLira.punti('claw', premio);
+    DaProdLira.evento('claw', o.g >= 2 ? 'shiny' : 'presa');
+  }
   if (regalo) stato.st.regali++;
   if (o.g >= 2) stato.st.shiny++;
   stato.st.gradoMax = Math.max(stato.st.gradoMax, o.g);
@@ -2237,6 +2244,7 @@ function sblocca(z) {
   const Z = ZONE[z];
   if (!Z || stato.zone[z] || !stato.zone[z - 1] || potenzaTotale() < Z.pot || stato.lire < Z.prezzo) return false;
   stato.lire -= Z.prezzo; stato.zone[z] = true; stato.zona = z;
+  if (window.DaProdLira) DaProdLira.evento('claw', 'zona');
   $('sblocco').classList.add('chiuso');
   bersaglio(cxZona(z), -.5);
   suono.sblocca(); lampo(.7); scossa(.3);
@@ -2867,6 +2875,14 @@ if (MODO === 'demo') { inGioco = true; }
 posaCamera(1, true);
 preparaPost();
 requestAnimationFrame((t) => { ultimo = t; requestAnimationFrame(ciclo); $('caricamento').classList.add('via'); });
+
+// Le Lire DaProd: solo dentro la sala giochi della DaProd Suite la partita
+// fatta qui si stacca in lire. Qui sul sito e nelle app daprod-lira.js non fa
+// niente, e il gioco e' la sua demo.
+if (window.DaProdLira && MODO === 'gioco') DaProdLira.init({
+  gioco: 'claw',
+  ricarica: { detto: '+L.3.000 per le prese', dai: () => { stato.lire += 3000; aggiornaHUD(); daSalvare = true; avviso('🦾 Ricarica DaProd: +' + lire(3000), 'cia'); } },
+});
 
 // API per le prove automatiche e per chi vuole curiosare dalla console
 window.CLAW = {

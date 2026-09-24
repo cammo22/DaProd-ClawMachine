@@ -91,7 +91,11 @@ console.log('\n== COMPUTER ==');
   T('fisica: il mucchio si assesta e dorme', fisica.dormono > .8, (fisica.dormono * 100).toFixed(0) + '%');
 
   // --- GIOCA ---
-  await page.locator('#giocaBtn').click();
+  // force: sul runner di GitHub (due core, WebGL in software) la vasca si
+  // mangia tutti i fotogrammi, e Playwright aspetta due fotogrammi fermi prima
+  // di dire che il tasto e' «stabile»: non arrivano mai e la prova cadeva al
+  // 30esimo secondo. Il tasto non si muove; il clic resta un clic vero.
+  await page.locator('#giocaBtn').click({ force: true });
   await page.waitForTimeout(900);
   T('GIOCA chiude la schermata iniziale', await page.evaluate(() => CLAW.inGioco()) && await page.locator('#intro.via').count() === 1);
   T('tre teste nella barra, la pinza scelta', await page.locator('#teste .testa').count() === 3 && await page.locator('#teste .testa.sel').getAttribute('data-t') === 'pinza');
@@ -141,7 +145,11 @@ console.log('\n== COMPUTER ==');
   // --- SENZA LIRE ---
   const povero = await page.evaluate(() => { CLAW.stato.lire = 50; const r = CLAW.prendi(); return { r, lire: CLAW.stato.lire }; });
   T('senza lire la presa non parte e non si paga', povero.r === false && povero.lire === 50);
-  const cortesia = await page.evaluate(() => { for (let i = 0; i < 60; i++) CLAW.rendimento(.1); return CLAW.stato.lire; });
+  // Si resta poveri finche' il bonus non arriva: la rendita della collezione
+  // dipende da quanti modellini ha preso la pinza qui sopra (a caso), e con
+  // tanti presi le lire passavano la soglia prima dei 5 secondi. Sul runner di
+  // GitHub, 28 presi: il bonus non scattava mai.
+  const cortesia = await page.evaluate(() => { for (let i = 0; i < 60; i++) { if (CLAW.stato.lire < 1000) CLAW.stato.lire = 50; CLAW.rendimento(.1); } return CLAW.stato.lire; });
   T('bonus di cortesia: arriva L.1.000', cortesia >= 1000, 'L.' + Math.round(cortesia));
 
   // --- LE TRE TESTE ---

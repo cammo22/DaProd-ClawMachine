@@ -62,6 +62,16 @@ capienza, motore, fortuna shiny e rendita, più le teste da sbloccare.
 **Mai bloccato**: ogni fase del carroponte ha un tempo massimo, la presa si paga solo se parte davvero,
 sopra la buca non si cala, e con meno di L.100 arriva il **bonus di cortesia**.
 
+## 💶 Le Lire DaProd, nella DaProd Suite
+
+Qui sul sito e nelle app il gioco è la sua **demo**, come sempre: niente da collegare, niente conti.
+
+Dentro la [DaProd Suite](https://github.com/cammo22/DaProdSuite) il gioco sta nella **sala giochi**: quello che
+prendi fa punti della partita, e quando stacchi diventano **Lire DaProd** alla quotazione della Borsa. Shiny,
+zone nuove e prese buone danno **carte** per la slot delle combinazioni. Il ponte è `gioca/daprod-lira.js`, lo
+stesso file nei tre giochi (la copia buona sta nella suite): fuori dalla suite non fa niente, e se il computer
+DaProd non risponde il gioco continua lo stesso.
+
 ## 💾 Salvataggio
 
 Tutto si salva da solo in `localStorage` (chiave `daprod_claw_v3`), **mucchio della vasca compreso**. Chi
