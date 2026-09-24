@@ -151,6 +151,14 @@ console.log('\n== COMPUTER ==');
   // GitHub, 28 presi: il bonus non scattava mai.
   const cortesia = await page.evaluate(() => { for (let i = 0; i < 60; i++) { if (CLAW.stato.lire < 1000) CLAW.stato.lire = 50; CLAW.rendimento(.1); } return CLAW.stato.lire; });
   T('bonus di cortesia: arriva L.1.000', cortesia >= 1000, 'L.' + Math.round(cortesia));
+  const limite = await page.evaluate(() => {
+    const C = CLAW; C.stato.cortesie = []; const esiti = [];
+    for (let i = 0; i < 7; i++) esiti.push(C.bonusDiCortesia());
+    const dati = esiti.filter(Boolean).length;
+    C.stato.cortesie = C.stato.cortesie.map(t => t - 7 * 3600e3);
+    return { dati, tornano: C.bonusDiCortesia() };
+  });
+  T('bonus di cortesia: al massimo 5 ogni 6 ore, poi tornano', limite.dati === 5 && limite.tornano === true, JSON.stringify(limite));
 
   // --- LE TRE TESTE ---
   const teste = await page.evaluate(() => {
@@ -258,8 +266,11 @@ console.log('\n== COMPUTER ==');
   T('20 caselle nella vetrina', await page.locator('#griglia .cella').count() === 20);
   T('le miniature sono immagini vere', await page.evaluate(() => [...document.querySelectorAll('#griglia .cella img')].every(i => i.src.startsWith('data:image/png') && i.src.length > 800)));
   T('i modellini da trovare sono sagome ???', await page.locator('#griglia .cella.ignota').count() >= 10);
+  const vbox = await page.locator('#vetrina .lato').boundingBox();
+  T('la vetrina e a schermo intero', vbox && vbox.width >= 1270 && vbox.height >= 700, JSON.stringify(vbox));
   await page.locator('#griglia .cella[data-m="0"]').click();
   await page.waitForTimeout(300);
+  T('toccato un modellino: il palco a tutto schermo, la griglia sparisce', await page.locator('#vetrina.dettaglio').count() === 1 && await page.locator('#griglia').isHidden() && await page.locator('#indietroVet').isVisible());
   T('la scheda mostra il grado', (await page.locator('#scheda').textContent()).includes('BRONZO'));
   T('il pulsante POTENZIA è pronto', await page.locator('#potenziaBtn:not([disabled])').count() === 1);
   await page.evaluate(() => { CLAW.stato.lire = 100000; });

@@ -4,6 +4,15 @@ Tutte le versioni notevoli del gioco. Le date sono in formato AAAA-MM-GG.
 Ogni versione pubblicata ha anche una [release GitHub](https://github.com/cammo22/DaProd-ClawMachine/releases)
 con le app per Android, Windows e Mac, e va online su [GitHub Pages](https://cammo22.github.io/DaProd-ClawMachine/) subito dopo il push.
 
+## [1.1.1] — 2026-09-24 · La vetrina a schermo intero
+
+- **La vetrina è a schermo intero**, in due passi: prima tutti i modellini, zona per zona; toccato un modellino, il palco
+  3D si prende lo schermo e la sua scheda (potenza, premio, copie, POTENZIA) sta sotto, con «← Vetrina» per tornare. Sul
+  computer la scheda sta a destra. Prima erano sempre due metà, e sul telefono nessuna delle due si vedeva bene.
+- **Il bonus di cortesia arriva al massimo 5 volte ogni 6 ore**: dice quanti ne restano e quando torna il prossimo.
+- Dentro la [DaProd Suite](https://github.com/cammo22/DaProdSuite) la ricarica è un portafoglio: ogni L.1 della suite
+  diventa L.30 per le prese.
+
 ## [1.1.0] — 2026-09-24 · Il ponte con la sala giochi della DaProd Suite 💶
 
 - **Dentro la [DaProd Suite](https://github.com/cammo22/DaProdSuite)** la Claw Machine sta nella sala giochi:
