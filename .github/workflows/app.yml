@@ -1,0 +1,187 @@
+# Compila le app di DaProd Claw Machine: APK (Android), EXE (Windows) e DMG (Mac).
+#
+#  - su ogni PR: fa girare le prove automatiche (test/prove.mjs) e compila tutto, lasciando i file fra
+#    gli artefatti (controllo che funzioni)
+#  - su ogni push su main: se la versione scritta in gioca/index.html (VERSIONE = 'vX.Y.Z') non ha ancora
+#    una release, compila e pubblica da sola la release vX.Y.Z con APK, EXE e DMG e con le note
+#    prese dal CHANGELOG. Basta alzare la versione e unire: il resto è automatico.
+#  - a mano (workflow_dispatch) o con un tag v*: stessa cosa.
+#
+# Firma Android: con i segreti ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS e
+# ANDROID_KEY_PASSWORD si firma con la chiave DaProd (gli aggiornamenti si installano sopra),
+# altrimenti con la chiave di debug. EXE e DMG non sono firmati (vedi README).
+name: App (Android, Windows, Mac)
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: app-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  versione:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.v.outputs.tag }}
+      numero: ${{ steps.v.outputs.numero }}
+      pubblica: ${{ steps.v.outputs.pubblica }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENTO: ${{ github.event_name }}
+          TIPO_REF: ${{ github.ref_type }}
+          REPO: ${{ github.repository }}
+        run: |
+          TAG=$(grep -oE "const VERSIONE = 'v[0-9]+\.[0-9]+\.[0-9]+'" gioca/index.html | grep -oE "v[0-9.]+")
+          [ -n "$TAG" ] || { echo "VERSIONE non trovata in gioca/index.html"; exit 1; }
+          PUBBLICA=false
+          if [ "$EVENTO" != "pull_request" ]; then
+            if [ "$TIPO_REF" = "tag" ] || ! gh release view "$TAG" -R "$REPO" >/dev/null 2>&1; then PUBBLICA=true; fi
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "numero=${TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "pubblica=$PUBBLICA" >> "$GITHUB_OUTPUT"
+          echo "versione $TAG, pubblica release: $PUBBLICA"
+
+  prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20 }
+      - name: Playwright e three.js
+        run: |
+          npm i --no-save playwright@1.56.1 three@0.160.0
+          npx playwright install --with-deps chromium
+      - name: Prove automatiche (il gioco giocato da solo in Chromium)
+        run: node test/prove.mjs
+
+  android:
+    needs: versione
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20 }
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: 17 }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.9' }
+      - name: Android SDK del runner
+        run: |
+          echo "ANDROID_HOME=${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          ls "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platforms" | tail -3
+      - name: Gioco e three.js negli asset
+        run: |
+          npm i --no-save three@0.160.0
+          node strumenti/prepara-www.mjs android
+      - name: Chiave di firma (se c'è)
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KS" ]; then
+            echo "$KS" | base64 -d > "$RUNNER_TEMP/daprod.keystore"
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/daprod.keystore" >> "$GITHUB_ENV"
+          else
+            echo "nessun segreto: chiave di debug"
+          fi
+      - name: Compila l'APK
+        working-directory: android
+        env:
+          VERSIONE: ${{ needs.versione.outputs.numero }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: gradle --no-daemon assembleRelease
+      - run: cp android/app/build/outputs/apk/release/app-release.apk "DaProd-Claw-Machine-${{ needs.versione.outputs.numero }}.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: DaProd-Claw-Machine-*.apk
+
+  desktop:
+    needs: versione
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            nome: windows
+            opzioni: --win
+            file: desktop/dist/*.exe
+          - os: macos-latest
+            nome: mac
+            opzioni: --mac
+            file: desktop/dist/*.dmg
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20 }
+      - name: Gioco e three.js nella cartella dell'app
+        shell: bash
+        run: |
+          npm i --no-save three@0.160.0
+          node strumenti/prepara-www.mjs desktop
+      - name: Compila
+        shell: bash
+        working-directory: desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          npm install --no-audit --no-fund
+          npm version "${{ needs.versione.outputs.numero }}" --no-git-tag-version --allow-same-version
+          npx electron-builder ${{ matrix.opzioni }} --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.nome }}
+          path: ${{ matrix.file }}
+
+  release:
+    needs: [versione, prove, android, desktop]
+    if: needs.versione.outputs.pubblica == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          path: file
+          merge-multiple: true
+      - name: Pubblica la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.versione.outputs.tag }}
+          SHA: ${{ github.sha }}
+        run: |
+          ls -la file
+          V="${TAG#v}"
+          # note: la sezione del CHANGELOG di questa versione
+          awk -v v="$V" '$0 ~ "^## \\[" v "\\]" {on=1; next} on && /^## \[/ {exit} on {print}' CHANGELOG.md > note.md
+          TITOLO=$(grep -m1 "^## \[$V\]" CHANGELOG.md | sed -E 's/^## \[[^]]*\] — [0-9-]+ · //')
+          cat >> note.md <<'FINE'
+
+          ### 📥 Scarica e gioca
+          | | File | Come si installa |
+          | --- | --- | --- |
+          | 🤖 Android | `.apk` | apri il file sul telefono e consenti l'installazione da origini sconosciute |
+          | 🪟 Windows | `.exe` | è portatile: doppio clic e si gioca (se SmartScreen avvisa: *Ulteriori informazioni → Esegui comunque*) |
+          | 🍎 Mac | `.dmg` | trascina l'app in Applicazioni; la prima volta *tasto destro → Apri* (l'app non è firmata da Apple) |
+
+          Tutte le app funzionano anche offline. ▶ Oppure gioca dal browser: https://cammo22.github.io/DaProd-ClawMachine/
+          FINE
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" file/* --clobber
+          else
+            gh release create "$TAG" file/* --target "$SHA" --title "$TAG · ${TITOLO:-DaProd Claw Machine}" --notes-file note.md
+          fi
