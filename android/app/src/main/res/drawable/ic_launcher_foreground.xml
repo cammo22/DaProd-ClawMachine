@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Emblema DaProd Claw Machine: gettone con anello d'oro e la pinza a tre artigli -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <group android:translateX="22" android:translateY="22">
+        <path android:fillColor="#150E24" android:strokeColor="#FFD54A" android:strokeWidth="4"
+            android:pathData="M32,5a27,27 0,1 1,0 54a27,27 0,1 1,0 -54z" />
+        <path android:fillColor="#00000000" android:strokeColor="#FF5CF4" android:strokeWidth="2"
+            android:pathData="M32,11.5a20.5,20.5 0,1 1,0 41a20.5,20.5 0,1 1,0 -41z" />
+        <path android:fillColor="#00000000" android:strokeColor="#DFE4EE" android:strokeWidth="2"
+            android:pathData="M32,9L32,21" />
+        <path android:fillColor="#FF2D78" android:pathData="M25,21h14v7h-14z" />
+        <path android:fillColor="#00000000" android:strokeColor="#FFD54A" android:strokeWidth="3.2" android:strokeLineCap="round"
+            android:pathData="M27,28 L20,38 L24,46 M37,28 L44,38 L40,46 M32,28 L32,44" />
+        <path android:fillColor="#35E8FF" android:pathData="M32,50m-3.5,0a3.5,3.5 0,1 1,7 0a3.5,3.5 0,1 1,-7 0" />
+    </group>
+</vector>

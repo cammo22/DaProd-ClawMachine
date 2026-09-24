@@ -1,0 +1,52 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Versione presa dal tag (v2.0.0 -> 2.0.0, codice 20000). Senza tag: 0.0.0.
+def nomeVersione = (System.getenv('VERSIONE') ?: '0.0.0').replaceFirst('^v', '')
+def parti = (nomeVersione.tokenize('.') + ['0', '0', '0']).take(3).collect { (it.replaceAll(/\D.*/, '') ?: '0') as int }
+def codiceVersione = Math.max(1, parti[0] * 10000 + parti[1] * 100 + parti[2])
+
+// Firma: se ci sono i segreti del repository (vedi .github/workflows/app.yml) si firma con la chiave
+// DaProd, così gli aggiornamenti si installano sopra la versione precedente; altrimenti chiave di debug.
+def chiave = System.getenv('KEYSTORE_FILE')
+
+android {
+    namespace 'it.daprod.clawmachine'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'it.daprod.clawmachine'
+        minSdk 26
+        targetSdk 34
+        versionCode codiceVersione
+        versionName nomeVersione
+    }
+
+    signingConfigs {
+        if (chiave) {
+            daprod {
+                storeFile file(chiave)
+                storePassword System.getenv('KEYSTORE_PASSWORD')
+                keyAlias System.getenv('KEY_ALIAS')
+                keyPassword System.getenv('KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig chiave ? signingConfigs.daprod : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.11.0'
+}

@@ -1,0 +1,33 @@
+{
+  "name": "daprod-claw-machine",
+  "productName": "DaProd Claw Machine",
+  "version": "0.0.0",
+  "description": "DaProd Claw Machine: la Grande Vasca, 20 modellini e 8 gradi shiny",
+  "author": "DaProd",
+  "license": "MIT",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --publish never"
+  },
+  "devDependencies": {
+    "electron": "32.2.7",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "it.daprod.clawmachine",
+    "productName": "DaProd Claw Machine",
+    "files": ["main.js", "www/**", "build/icon.png"],
+    "directories": { "output": "dist", "buildResources": "build" },
+    "win": { "target": "portable", "icon": "build/icon.png" },
+    "portable": { "artifactName": "DaProd-Claw-Machine-${version}.exe" },
+    "mac": {
+      "target": [{ "target": "dmg", "arch": ["universal"] }],
+      "icon": "build/icon.png",
+      "category": "public.app-category.games",
+      "identity": null
+    },
+    "dmg": { "artifactName": "DaProd-Claw-Machine-${version}.dmg", "title": "DaProd Claw Machine" }
+  }
+}
