@@ -91,7 +91,11 @@ console.log('\n== COMPUTER ==');
   T('fisica: il mucchio si assesta e dorme', fisica.dormono > .8, (fisica.dormono * 100).toFixed(0) + '%');
 
   // --- GIOCA ---
-  await page.locator('#giocaBtn').click();
+  // force: sul runner di GitHub (due core, WebGL in software) la vasca si
+  // mangia tutti i fotogrammi, e Playwright aspetta due fotogrammi fermi prima
+  // di dire che il tasto e' «stabile»: non arrivano mai e la prova cadeva al
+  // 30esimo secondo. Il tasto non si muove; il clic resta un clic vero.
+  await page.locator('#giocaBtn').click({ force: true });
   await page.waitForTimeout(900);
   T('GIOCA chiude la schermata iniziale', await page.evaluate(() => CLAW.inGioco()) && await page.locator('#intro.via').count() === 1);
   T('tre teste nella barra, la pinza scelta', await page.locator('#teste .testa').count() === 3 && await page.locator('#teste .testa.sel').getAttribute('data-t') === 'pinza');
