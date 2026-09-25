@@ -34,7 +34,7 @@ più shiny**, dal Base al Cosmico. Si gioca dal browser (telefono, tablet, compu
 | | Testa | Verbo | Cosa fa | Costo presa |
 | --- | --- | --- | --- | --- |
 | 🦾 | Pinza | **GRABBA** | tre artigli, fino a 2 modellini | ×1 |
-| 🎣 | Amo | **PESCA** | uno solo, il più vicino, e non lo molla quasi mai: per gli shiny | ×0,8 |
+| 🎣 | Amo | **PESCA** | i due più preziosi che ha sotto (shiny per primi), e non li molla mai | ×0,5 |
 | 🥅 | Rete | **ACCHIAPPA** | anello largo col sacco, fino a 5 (e più con la Capienza) | ×1,5 |
 
 ### ✨ Otto gradi
@@ -50,14 +50,21 @@ le lire. Nella vasca cadono anche **modellini shiny**: preso uno ORO, il modelli
 | Zona | Modellini | Presa | Potere della famiglia | Si apre con |
 | --- | --- | --- | --- | --- |
 | 🧸 Peluche Park | orsetto, coniglietto, rana, pinguino | L.100 | 💪 presa | — |
-| 🦆 Giocattoleria | paperella, trottola, macchinina, dinosauro | L.400 | 📐 apertura | ⚡12 + L.3.000 |
-| 🚀 Base Spaziale | razzo, disco volante, astronauta, pianeta | L.1.500 | ⚡ velocità | ⚡90 + L.40.000 |
-| 🐉 Tana dei Mostri | draghetto, fantasmino, slime, unicorno | L.5.000 | 🍀 shiny | ⚡600 + L.350.000 |
-| 👑 Caveau dei Tesori | corona, trofeo, gemma, gettone DaProd | L.18.000 | 💰 lire | ⚡4.000 + L.3 milioni |
+| 🦆 Giocattoleria | paperella, trottola, macchinina, dinosauro | L.400 | 📐 apertura | ⚡12 + L.7.500 |
+| 🚀 Base Spaziale | razzo, disco volante, astronauta, pianeta | L.1.500 | ⚡ velocità | ⚡90 + L.100.000 |
+| 🐉 Tana dei Mostri | draghetto, fantasmino, slime, unicorno | L.5.000 | 🍀 shiny | ⚡600 + L.900.000 |
+| 👑 Caveau dei Tesori | corona, trofeo, gemma, gettone DaProd | L.18.000 | 💰 lire | ⚡4.000 + L.8 milioni |
 
 La **potenza** è la somma dei modellini in vetrina (base × grado) e fa anche **rendita**: lire al
 secondo, pure a gioco chiuso (fino a due ore, a metà). Nell'**Officina** ci sono presa forte, apertura,
 capienza, motore, fortuna shiny e rendita, più le teste da sbloccare.
+
+### 🏆 La fine
+
+Tutti e 20 i modellini in collezione e la partita è finita: il pannello fa vedere le tue lire di gioco
+(anche miliardi) diventare euro. Nella [DaProd Suite](https://github.com/cammo22/DaProdSuite) si riscatta:
+da 20 a 30 euro nel portafoglio, più il premio della velocità e un pezzo del montepremi, e il gioco
+ricomincia da capo. Fuori dalla suite si ricomincia e basta.
 
 **Mai bloccato**: ogni fase del carroponte ha un tempo massimo, la presa si paga solo se parte davvero,
 sopra la buca non si cala, e con meno di L.100 arriva il **bonus di cortesia**.
