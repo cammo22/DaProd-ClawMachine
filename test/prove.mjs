@@ -283,6 +283,18 @@ console.log('\n== COMPUTER ==');
   await page.locator('#chiudiVet').click();
   T('nessun errore dopo tutto il giro', errori.length === 0, errori.join(' | '));
 
+  // --- AVVISI (1.1.2, come nel Dozer) ---
+  await page.evaluate(() => { document.getElementById('avvisi').innerHTML = ''; CLAW.avviso('prova normale', 'cia'); CLAW.avviso('prova importante', 'rosso imp'); });
+  const av = await page.locator('#avvisi .avviso').first().boundingBox();
+  T('avvisi: su computer stanno sul bordo sinistro', av && av.x < 40 && av.width <= 310, JSON.stringify(av));
+  await page.locator('#scritteBtn').click();
+  T('avvisi: col 💬 spento restano solo gli importanti', await page.evaluate(() => {
+    const [n, i] = document.querySelectorAll('#avvisi .avviso');
+    return !CLAW.stato.opz.scritte && getComputedStyle(n).display === 'none' && getComputedStyle(i).display !== 'none';
+  }));
+  await page.locator('#scritteBtn').click();
+  T('avvisi: il 💬 le riaccende', await page.evaluate(() => CLAW.stato.opz.scritte && !document.body.classList.contains('senzaScritte')));
+
   // --- SALVATAGGIO ---
   const prima = await page.evaluate(() => { CLAW.salva(); return { lire: Math.round(CLAW.stato.lire), g: CLAW.stato.coll.orsetto.g, zone: CLAW.stato.zone.filter(Boolean).length, n: CLAW.stato.vasca.length }; });
   await page.reload({ waitUntil: 'commit' });
@@ -315,6 +327,10 @@ console.log('\n== TELEFONO ==');
   await page.locator('#prendiBtn').tap();
   await page.waitForTimeout(300);
   T('telefono: PRENDI parte', await page.evaluate(() => CLAW.pinza.prenota || CLAW.pinza.fase !== 'libera'));
+  await page.evaluate(() => { document.getElementById('avvisi').innerHTML = ''; for (let i = 0; i < 4; i++) CLAW.avviso('avviso ' + i); });
+  const pill = await page.evaluate(() => [...document.querySelectorAll('#avvisi .avviso')].filter(e => getComputedStyle(e).display !== 'none').map(e => { const r = e.getBoundingClientRect(); return [r.x, r.width, r.height]; }));
+  T('telefono: avvisi piccoli al centro, al massimo due', pill.length === 2 && pill.every(([x, w, h]) => x > 0 && x + w < 390 && h < 30), JSON.stringify(pill));
+  T('telefono: c\'è il tasto per le scritte', await page.locator('#scritteBtn').isVisible());
   await ctx.close();
 }
 

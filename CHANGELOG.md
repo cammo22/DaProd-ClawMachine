@@ -4,6 +4,13 @@ Tutte le versioni notevoli del gioco. Le date sono in formato AAAA-MM-GG.
 Ogni versione pubblicata ha anche una [release GitHub](https://github.com/cammo22/DaProd-ClawMachine/releases)
 con le app per Android, Windows e Mac, e va online su [GitHub Pages](https://cammo22.github.io/DaProd-ClawMachine/) subito dopo il push.
 
+## [1.1.2] — 2026-09-25 · Gli avvisi del Dozer
+
+- **Gli avvisi funzionano come nel Coin Dozer**: sul computer stanno sul bordo sinistro, lontano dalla vasca; sul
+  telefono sono pillole piccole sotto il saldo, al massimo due alla volta.
+- **Il tasto 💬** accanto alla collezione spegne le scritte: via gli avvisi di contorno, i numeri che volano e il
+  suggerimento. Restano quelli che contano (lire che mancano, ricariche, bonus di cortesia, potenziamenti). Si ricorda.
+
 ## [1.1.1] — 2026-09-24 · La vetrina a schermo intero
 
 - **La vetrina è a schermo intero**, in due passi: prima tutti i modellini, zona per zona; toccato un modellino, il palco
