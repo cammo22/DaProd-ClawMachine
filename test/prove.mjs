@@ -180,10 +180,11 @@ console.log('\n== COMPUTER ==');
     C.scegliTesta('pinza');
     return out;
   });
-  T('amo e rete si comprano in officina', teste.amoComprato && teste.reteComprata && teste.lire === 50000 - 2000 - 12000);
+  T('amo e rete si comprano in officina', teste.amoComprato && teste.reteComprata && teste.lire === 50000 - 4000 - 12000);
   T('la rete acchiappa più modellini insieme', teste.presiRete >= 3 && teste.presiRete <= teste.capRete, teste.presiRete + '/' + teste.capRete);
-  T('l\'amo ne pesca uno solo', teste.presiAmo === 1, String(teste.presiAmo));
-  T('l\'amo costa meno della pinza', teste.costoAmo === 80, 'L.' + teste.costoAmo);
+  // 1.1.4: l'amo ne pesca fino a due (i piu' preziosi) e costa meta' presa.
+  T('l\'amo ne pesca uno o due', teste.presiAmo >= 1 && teste.presiAmo <= 2, String(teste.presiAmo));
+  T('l\'amo costa meta\' della pinza', teste.costoAmo === 50, 'L.' + teste.costoAmo);
 
   // --- SCIVOLA ---
   const sciv = await page.evaluate(() => {
@@ -241,7 +242,7 @@ console.log('\n== COMPUTER ==');
   });
   T('una zona non si apre senza potenza', zone.senzaPotenza === false);
   T('le zone si aprono in ordine', zone.salto === false);
-  T('con potenza e lire la zona 2 si apre', zone.si === true && zone.lire === 1e6 - 3000, 'potenza ' + zone.potenza);
+  T('con potenza e lire la zona 2 si apre', zone.si === true && zone.lire === 1e6 - 7500, 'potenza ' + zone.potenza);
   T('la pinza va nella zona 2', zone.zona === 1);
   T('la pinza non entra nella zona chiusa', zone.nonOltre === 1);
   T('nella zona 2 la presa costa L.400', zone.costo === 400 && zone.speso === 400, 'L.' + zone.speso);
@@ -254,7 +255,7 @@ console.log('\n== COMPUTER ==');
   T('l\'officina si apre', await page.locator('#officina:not(.chiuso)').count() === 1);
   T('sei potenziamenti in officina', await page.locator('#contenutoOff [data-pot]').count() === 6);
   const off = await page.evaluate(() => { const C = CLAW; C.stato.lire = 10000; const p0 = C.presaEff(C.TESTE.pinza); const r = C.compra('presa'); return { r, dp: C.presaEff(C.TESTE.pinza) - p0, lire: C.stato.lire, liv: C.stato.pot.presa }; });
-  T('comprare PRESA FORTE alza la presa', off.r && off.liv === 1 && off.dp > .03 && off.lire === 10000 - 500);
+  T('comprare PRESA FORTE alza la presa', off.r && off.liv === 1 && off.dp > .03 && off.lire === 10000 - 1250);   // 1.1.4: tutto costa due volte e mezzo
   for (const s of ['teste', 'opz', 'stat']) {
     await page.locator(`#schedeOff [data-scheda="${s}"]`).click(); await page.waitForTimeout(150);
     T(`scheda ${s} dell'officina`, await page.locator('#contenutoOff > *').count() > 0);
@@ -288,6 +289,16 @@ console.log('\n== COMPUTER ==');
     for (const m of CLAW.MODELLI) CLAW.stato.coll[m.id] = { g: 1, c: 1 }; const dopo = CLAW.finita();
     CLAW.stato.coll = JSON.parse(c); return { prima, dopo }; });
   T('la partita e\' finita con tutti e 20 i modellini, non prima', !fine.prima && fine.dopo, JSON.stringify(fine));
+  // 1.1.4: il pannello della fine, col punteggio che diventa euro.
+  const pannello = await page.evaluate(async () => {
+    CLAW.stato.lire = 6.1e9; CLAW.mostraLaFine(); await new Promise(r => setTimeout(r, 1900));
+    const r = { visto: !document.getElementById('fine').hidden, lire: document.getElementById('fineLire').textContent,
+      premio: document.getElementById('finePremio').textContent, tasto: document.getElementById('fineBtn').textContent,
+      stima: [CLAW.premioStimato(1e3), CLAW.premioStimato(1e11)] };
+    document.getElementById('fine').hidden = true; return r; });
+  T('alla fine il pannello fa vedere le lire di gioco e il premio in euro', pannello.visto && pannello.lire === 'L.6,1 mld' && /€ 2\d,\d\d/.test(pannello.premio), JSON.stringify(pannello));
+  T('il premio va da 20 a 30 euro', pannello.stima[0] === 20 && pannello.stima[1] === 30, JSON.stringify(pannello.stima));
+  T('fuori dalla sala il tasto ricomincia da capo', /RICOMINCIA/.test(pannello.tasto), pannello.tasto);
 
   // --- LUCI E QUALITÀ (1.1.2) ---
   T('luci: due luci colorate per le zone, non una per zona', await page.evaluate(() => CLAW.luciAccese()) === 2);

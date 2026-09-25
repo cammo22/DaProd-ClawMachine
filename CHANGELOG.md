@@ -4,6 +4,19 @@ Tutte le versioni notevoli del gioco. Le date sono in formato AAAA-MM-GG.
 Ogni versione pubblicata ha anche una [release GitHub](https://github.com/cammo22/DaProd-ClawMachine/releases)
 con le app per Android, Windows e Mac, e va online su [GitHub Pages](https://cammo22.github.io/DaProd-ClawMachine/) subito dopo il push.
 
+## [1.1.4] — 2026-09-25 · La fine che paga, e PRENDI al centro
+
+- **La fine della partita ha il suo pannello**: tutti e 20 i modellini, e le tue lire di gioco (anche 6,1 miliardi)
+  diventano euro sotto i tuoi occhi. Dentro la [DaProd Suite](https://github.com/cammo22/DaProdSuite) il tasto è
+  «Riscatta e ricomincia»: da 20 a 30 euro nel portafoglio, di più col punteggio alto, più il premio della velocità e un
+  pezzo del montepremi della Banca. Fuori dalla suite si ricomincia da capo.
+- **PRENDI sta al centro**, grande; pinza, amo e rete sono una pastiglia piccola sotto, e vetrina e officina a sinistra.
+- **L'amo serve**: costa metà presa, pesca i due modellini più preziosi che ha sotto (gli shiny per primi) e non li molla.
+  Si compra a L.4.000.
+- **Si arriva alla fine più piano**: zone e potenziamenti costano due volte e mezzo, e la rendita della collezione è più
+  bassa. Senza ricariche la collezione chiede da mezz'ora a due ore; chi ricarica compra i potenziamenti subito.
+- **Cifre corte** (L.150k, L.15,5M, L.6,1 mld) e, nella suite, lire o euro come si sceglie in alto nella sala.
+
 ## [1.1.3] — 2026-09-25 · Nella sala DaProd è una partita da finire
 
 - Dentro la [DaProd Suite](https://github.com/cammo22/DaProdSuite) la Claw è **una partita da finire**: si finisce con
