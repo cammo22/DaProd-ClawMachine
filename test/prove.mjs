@@ -283,6 +283,14 @@ console.log('\n== COMPUTER ==');
   await page.locator('#chiudiVet').click();
   T('nessun errore dopo tutto il giro', errori.length === 0, errori.join(' | '));
 
+  // --- LUCI E QUALITÀ (1.1.2) ---
+  T('luci: due luci colorate per le zone, non una per zona', await page.evaluate(() => CLAW.luciAccese()) === 2);
+  const lisci = await page.evaluate(() => { const o = CLAW.stato.opz.qualita;
+    CLAW.stato.opz.qualita = 'bassa'; CLAW.qualita(); const b = CLAW.MAT.filter(Boolean).every(m => m.clearcoat === 0 && m.iridescence === 0);
+    CLAW.stato.opz.qualita = 'alta'; CLAW.qualita(); const a = CLAW.MAT.filter(Boolean).some(m => m.clearcoat > 0) && CLAW.MAT.filter(Boolean).some(m => m.iridescence > 0);
+    CLAW.stato.opz.qualita = o; CLAW.qualita(); return { b, a }; });
+  T('in bassa i peluche perdono lucido e iridescenza, in alta li riprendono', lisci.b && lisci.a, JSON.stringify(lisci));
+
   // --- AVVISI (1.1.2, come nel Dozer) ---
   await page.evaluate(() => { document.getElementById('avvisi').innerHTML = ''; CLAW.avviso('prova normale', 'cia'); CLAW.avviso('prova importante', 'rosso imp'); });
   const av = await page.locator('#avvisi .avviso').first().boundingBox();
@@ -331,6 +339,7 @@ console.log('\n== TELEFONO ==');
   const pill = await page.evaluate(() => [...document.querySelectorAll('#avvisi .avviso')].filter(e => getComputedStyle(e).display !== 'none').map(e => { const r = e.getBoundingClientRect(); return [r.x, r.width, r.height]; }));
   T('telefono: avvisi piccoli al centro, al massimo due', pill.length === 2 && pill.every(([x, w, h]) => x > 0 && x + w < 390 && h < 30), JSON.stringify(pill));
   T('telefono: c\'è il tasto per le scritte', await page.locator('#scritteBtn').isVisible());
+  T('telefono: niente vetro sfocato sopra il 3D', await page.evaluate(() => getComputedStyle(document.querySelector('#saldoBox')).backdropFilter === 'none'));
   await ctx.close();
 }
 

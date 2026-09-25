@@ -65,6 +65,12 @@
   /* ---------- HUD ---------- */
   #hud { position: fixed; left: 0; right: 0; top: 0; z-index: 10; pointer-events: none;
     padding: calc(12px + var(--sat)) 16px 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  /* ⚠ Sui telefoni niente vetro sfocato (1.1.2): il blur dietro a ogni carta va rifatto a ogni fotogramma, perche'
+     sotto c'e' il 3D che si muove. Il vetro diventa solo un po' piu' scuro. */
+  @media (hover: none), (pointer: coarse) {
+    .carta, #scheda { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+    .carta { --vetro: rgba(14,10,26,.86); }
+  }
   .carta { background: var(--vetro); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     border: 1px solid var(--bordo); border-radius: var(--r);
     box-shadow: 0 12px 34px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.10); }
@@ -1510,7 +1516,6 @@ for (let i = 0; i < ZONE.length; i++) {
   const cono = new THREE.Mesh(new THREE.ConeGeometry(4.2, 9, 32, 1, true), M_CONO.clone());
   cono.material.uniforms.uCol.value = col.clone().lerp(new THREE.Color(1, 1, 1), .5);
   cono.position.set(cx, 5.5, -.5); gruppo.add(cono);
-  const luce = new THREE.PointLight(col, 9, 16, 1.6); luce.position.set(cx, 4.2, 1.5); gruppo.add(luce);
   scena.add(gruppo);
   // zona chiusa: velo scuro, barriera olografica e cartello
   const chiusa = new THREE.Group();
@@ -1522,7 +1527,22 @@ for (let i = 0; i < ZONE.length; i++) {
   const cartello = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 2.3), new THREE.MeshBasicMaterial({ transparent: true, toneMapped: false, depthTest: false }));
   cartello.position.set(cx, 3.1, 1.2); cartello.renderOrder = 5; chiusa.add(cartello);
   scena.add(chiusa);
-  ZONE3D.push({ gruppo, chiusa, cartello, barriera, tb, luce, cono, velo, fade: 1 });
+  ZONE3D.push({ gruppo, chiusa, cartello, barriera, tb, col, cono, velo, fade: 1 });
+}
+/**
+ * Le luci colorate delle zone (1.1.2): due che seguono la camera, non una per zona. Erano cinque PointLight
+ * sempre accese, e ogni pixel di ogni peluche (clearcoat, iridescenza) le pagava tutte, anche quelle di zone
+ * fuori dallo schermo. Si vedono al massimo due zone per volta: quella inquadrata e la vicina.
+ */
+const LUCI_ZONA = [0, 1].map(() => { const l = new THREE.PointLight(0xffffff, 0, 16, 1.6); scena.add(l); return l; });
+function luciDelleZone(x) {
+  const i0 = zonaDi(x), i1 = x >= cxZona(i0) ? i0 + 1 : i0 - 1;
+  [i0, i1].forEach((k, j) => {
+    const l = LUCI_ZONA[j];
+    if (k < 0 || k >= ZONE3D.length) { l.intensity = 0; return; }
+    l.position.set(cxZona(k), 4.2, 1.5); l.color.copy(ZONE3D[k].col);
+    l.intensity = stato.zone[k] ? 9 : 3;
+  });
 }
 function aggiornaCartelli() {
   ZONE3D.forEach((Z3, i) => {
@@ -2643,6 +2663,14 @@ function applicaQualita() {
   const q = stato.opz.qualita, dpr = window.devicePixelRatio || 1;
   const pr = (q === 'alta' ? Math.min(dpr, 2) : q === 'media' ? Math.min(dpr, 1.5) : Math.min(dpr, 1)) * scalaAuto;
   renderer.setPixelRatio(Math.max(.6, pr));
+  // In bassa i peluche perdono lo strato lucido e l'iridescenza: sono il pezzo piu' caro di ogni pixel.
+  const lisci = q === 'bassa';
+  MAT.forEach(m => {
+    if (!m) return;
+    if (!m.userData.pieno) m.userData.pieno = { clearcoat: m.clearcoat, iridescence: m.iridescence };
+    const cc = lisci ? 0 : m.userData.pieno.clearcoat, ir = lisci ? 0 : m.userData.pieno.iridescence;
+    if (m.clearcoat !== cc || m.iridescence !== ir) { m.clearcoat = cc; m.iridescence = ir; m.needsUpdate = true; }
+  });
   const ombre = q !== 'bassa';
   if (renderer.shadowMap.enabled !== ombre) {
     renderer.shadowMap.enabled = ombre;
@@ -2663,18 +2691,20 @@ function ridimensiona() {
 }
 let ridT = null;
 addEventListener('resize', () => { clearTimeout(ridT); ridT = setTimeout(ridimensiona, 80); });
-let lentoT = 0, medioDt = 1 / 60, fpsT = 0, fpsN = 0;
+let lentoT = 0, svelto = 0, medioDt = 1 / 60, fpsT = 0, fpsN = 0;
 function adattaQualita(dt) {
   medioDt = lerp(medioDt, dt, .05);
   fpsT += dt; fpsN++;
-  if (fpsT > .5) { if (stato.opz.fps) $('fps').textContent = Math.round(fpsN / fpsT) + ' FPS · ' + stato.opz.qualita; fpsT = 0; fpsN = 0; }
+  if (fpsT > .5) { if (stato.opz.fps) $('fps').textContent = Math.round(fpsN / fpsT) + ' FPS · ' + stato.opz.qualita + (scalaAuto < 1 ? ' · ' + Math.round(scalaAuto * 100) + '%' : ''); fpsT = 0; fpsN = 0; }
   if (!stato.opz.auto || MODO !== 'gioco' || document.hidden) return;
-  if (medioDt > 1 / 26) lentoT += dt; else lentoT = Math.max(0, lentoT - dt * .5);
+  // sotto i 34 al secondo si scende (prima era 26: a 30 fissi restava li'), sopra i 55 la risoluzione risale
+  if (medioDt > 1 / 34) lentoT += dt; else lentoT = Math.max(0, lentoT - dt * .5);
+  if (medioDt < 1 / 55 && scalaAuto < 1) { svelto += dt; if (svelto > 6) { svelto = 0; scalaAuto = Math.min(1, scalaAuto + .1); applicaQualita(); } } else svelto = 0;
   if (lentoT > 4) {
     lentoT = 0;
     if (stato.opz.qualita === 'alta') { stato.opz.qualita = 'media'; avviso('Grafica: qualità media per restare fluido', 'cia'); }
     else if (stato.opz.qualita === 'media') { stato.opz.qualita = 'bassa'; avviso('Grafica: qualità bassa per restare fluido', 'cia'); }
-    else if (scalaAuto > .7) scalaAuto -= .15;
+    else if (scalaAuto > .6) scalaAuto = Math.max(.6, scalaAuto - .15);
     else return;
     applicaQualita(); daSalvare = true;
   }
@@ -2766,8 +2796,8 @@ function animaSala(dt) {
     Z3.tb.offset.y -= dt * .25;
     Z3.barriera.material.opacity = .55 + Math.sin(U_TEMPO.value * 2 + i) * .15;
     Z3.cartello.position.y = 3.1 + Math.sin(U_TEMPO.value * 1.4 + i) * .08;
-    Z3.luce.intensity = stato.zone[i] ? 9 : 3;
   }
+  luciDelleZone(camera.position.x);
   ledCarrello.material.color.setHSL((U_TEMPO.value * .1) % 1, 1, .6).multiplyScalar(2.5);
 }
 
@@ -2990,6 +3020,7 @@ if (window.DaProdLira && MODO === 'gioco') DaProdLira.init({
 // API per le prove automatiche e per chi vuole curiosare dalla console
 window.CLAW = {
   VERSIONE, MODO, GRADI, ZONE, MODELLI, TESTE, POT, SOGLIA, stato, pinza, FORZA, bonusDiCortesia, avviso, cambiaScritte,
+  luciAccese: () => { let n = 0; scena.traverse(o => { if (o.isPointLight && o.visible) n++; }); return n; }, MAT,
   oggetti: () => oggetti.filter(o => o.stato !== 'via'), tutti: () => oggetti,
   passo, simula, prendi, gioca, bersaglio, scegliTesta, vaiZona, sblocca, potenzia, compra, compraTesta,
   apriVetrina, chiudiVetrina, apriOfficina, chiudiOfficina, salva, carica, pulisci, fotografaVasca,
