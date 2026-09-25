@@ -4,6 +4,16 @@ Tutte le versioni notevoli del gioco. Le date sono in formato AAAA-MM-GG.
 Ogni versione pubblicata ha anche una [release GitHub](https://github.com/cammo22/DaProd-ClawMachine/releases)
 con le app per Android, Windows e Mac, e va online su [GitHub Pages](https://cammo22.github.io/DaProd-ClawMachine/) subito dopo il push.
 
+## [1.1.3] — 2026-09-25 · Nella sala DaProd è una partita da finire
+
+- Dentro la [DaProd Suite](https://github.com/cammo22/DaProdSuite) la Claw è **una partita da finire**: si finisce con
+  tutti e 20 i modellini in collezione. Appena succede, le lire che hai diventano lire vere nel portafoglio DaProd, col
+  **premio della velocità** (più in fretta finisci, più è alto), e il gioco **ricomincia da capo**.
+- Si può incassare anche prima, dalla cornice della sala: senza premio, e si ricomincia lo stesso.
+- **Una lira è una lira**: quello che ricarichi dalla suite arriva uguale per le prese (prima L.1 faceva L.30). DaProd tiene
+  il 10% di quello che incassi, e al massimo si porta a casa tre volte quello che si è messo.
+- Sul sito e nelle app non cambia niente: è la demo di sempre.
+
 ## [1.1.2] — 2026-09-25 · Gli avvisi del Dozer, e più fluida
 
 - **Gli avvisi funzionano come nel Coin Dozer**: sul computer stanno sul bordo sinistro, lontano dalla vasca; sul

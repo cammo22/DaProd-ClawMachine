@@ -605,7 +605,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-const VERSIONE = 'v1.1.2';
+const VERSIONE = 'v1.1.3';
 const $ = (id) => document.getElementById(id);
 const PARAMETRI = new URLSearchParams(location.search);
 // gioco = la partita vera; demo = la macchina gioca da sola (sfondo della home); vetrina = sfilata dei modellini
@@ -2097,10 +2097,11 @@ function vinci(o) {
   rec.g = Math.max(rec.g, o.g, 1);
   const premio = Math.round(M.valore * G.mult * moltLire());
   stato.lire += premio; stato.st.vinti += premio; stato.st.catturati++;
-  // Il premio fa anche punti della partita DaProd; uno shiny e' una cosa grossa.
+  // Uno shiny e' una cosa grossa: nella suite puo' dare una carta. Dalla 1.1.3
+  // niente punti: le lire si incassano come sono (vedi DaProdLira.init).
   if (window.DaProdLira && MODO === 'gioco') {
-    DaProdLira.punti('claw', premio);
     DaProdLira.evento('claw', o.g >= 2 ? 'shiny' : 'presa');
+    if (nuovo) guardaLaFine();
   }
   if (regalo) stato.st.regali++;
   if (o.g >= 2) stato.st.shiny++;
@@ -3008,18 +3009,53 @@ posaCamera(1, true);
 preparaPost();
 requestAnimationFrame((t) => { ultimo = t; requestAnimationFrame(ciclo); $('caricamento').classList.add('via'); });
 
-// Le Lire DaProd: solo dentro la sala giochi della DaProd Suite la partita
-// fatta qui si stacca in lire. Qui sul sito e nelle app daprod-lira.js non fa
-// niente, e il gioco e' la sua demo.
+/**
+ * ⚠ Nella sala giochi della DaProd Suite la Claw e' una partita da finire
+ * (1.1.3). Chiesto da Cammo: «puoi finire il gioco il piu' velocemente
+ * possibile e convertire le lire guadagnate in lire vere DaProd, ma il gioco si
+ * resetta e la prossima volta ricomincia da capo».
+ *
+ * - Una lira e' una lira: quello che ricarichi dalla suite arriva uguale.
+ * - Finire vuol dire avere tutti e 20 i modellini in collezione. Appena
+ *   succede, si incassa da solo, col premio della velocita' (la suite lo conta
+ *   dalla prima ricarica).
+ * - Si puo' incassare anche prima, dalla cornice: senza premio.
+ * - Ogni incasso chiude la partita: il gioco riparte da capo, vasca nuova.
+ *
+ * Fuori dalla suite (sito, app) daprod-lira.js non fa niente: e' la demo.
+ */
+const finita = () => quantiPosseduti() >= MODELLI.length;
+let fineDetta = false;
+function guardaLaFine() {
+  if (fineDetta || !finita() || !window.DaProdLira || DaProdLira.modo !== 'suite') return;
+  fineDetta = true;
+  mostraBanner('COLLEZIONE COMPLETA', 'FINITA!', 'tutti e 20 i modellini · incasso in corso', 7);
+  if (typeof suono.jackpot === 'function') suono.jackpot();
+  setTimeout(() => { DaProdLira.incassa().catch(() => { fineDetta = false; }); }, 2600);
+}
+function ricominciaDaCapo() {
+  azzerato = true;
+  try { localStorage.removeItem(SALVA); localStorage.removeItem('daprod_claw_v2'); } catch (e) {}
+  setTimeout(() => location.reload(), 2200);
+}
 if (window.DaProdLira && MODO === 'gioco') DaProdLira.init({
   gioco: 'claw',
-  // Le lire della suite diventano lire per le prese: L.1 = L.30 (L.100 → L.3.000).
-  ricarica: { detto: 'L.1 della suite = L.30 per le prese', cambio: 30, dai: (quante) => { const l = Math.round((quante || 100) * 30); stato.lire += l; aggiornaHUD(); daSalvare = true; avviso('🦾 Ricarica DaProd: +' + lire(l), 'cia imp'); } },
+  ricarica: { detto: 'una lira della suite e\' una lira per le prese', cambio: 1, dai: (quante) => { const l = Math.max(0, Math.round(quante || 0)); stato.lire += l; aggiornaHUD(); daSalvare = true; avviso('🦾 Ricarica DaProd: +' + lire(l), 'cia imp'); } },
+  cassa: {
+    quanto: () => Math.floor(stato.lire),
+    finita,
+    chiudi: true,
+    togli: (r) => {
+      avviso((r.finita ? '🏆 Finita in ' + Math.round(r.minuti) + ' min! ' : '💰 ') + 'Incassato ' + lire(r.netto) + ' nel portafoglio DaProd · si ricomincia', 'cia imp');
+      mostraBanner(r.finita ? 'PARTITA FINITA' : 'INCASSATO', '+' + lire(r.netto), 'si ricomincia da capo', 7);
+      ricominciaDaCapo();
+    },
+  },
 });
 
 // API per le prove automatiche e per chi vuole curiosare dalla console
 window.CLAW = {
-  VERSIONE, MODO, GRADI, ZONE, MODELLI, TESTE, POT, SOGLIA, stato, pinza, FORZA, bonusDiCortesia, avviso, cambiaScritte,
+  VERSIONE, MODO, GRADI, ZONE, MODELLI, TESTE, POT, SOGLIA, stato, pinza, FORZA, bonusDiCortesia, avviso, cambiaScritte, finita,
   luciAccese: () => { let n = 0; scena.traverse(o => { if (o.isPointLight && o.visible) n++; }); return n; }, MAT,
   oggetti: () => oggetti.filter(o => o.stato !== 'via'), tutti: () => oggetti,
   passo, simula, prendi, gioca, bersaglio, scegliTesta, vaiZona, sblocca, potenzia, compra, compraTesta,
