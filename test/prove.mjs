@@ -283,6 +283,12 @@ console.log('\n== COMPUTER ==');
   await page.locator('#chiudiVet').click();
   T('nessun errore dopo tutto il giro', errori.length === 0, errori.join(' | '));
 
+  // --- LA FINE (1.1.3): tutti e 20 i modellini ---
+  const fine = await page.evaluate(() => { const c = JSON.stringify(CLAW.stato.coll); const prima = CLAW.finita();
+    for (const m of CLAW.MODELLI) CLAW.stato.coll[m.id] = { g: 1, c: 1 }; const dopo = CLAW.finita();
+    CLAW.stato.coll = JSON.parse(c); return { prima, dopo }; });
+  T('la partita e\' finita con tutti e 20 i modellini, non prima', !fine.prima && fine.dopo, JSON.stringify(fine));
+
   // --- LUCI E QUALITÀ (1.1.2) ---
   T('luci: due luci colorate per le zone, non una per zona', await page.evaluate(() => CLAW.luciAccese()) === 2);
   const lisci = await page.evaluate(() => { const o = CLAW.stato.opz.qualita;
