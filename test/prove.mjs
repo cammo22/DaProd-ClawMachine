@@ -407,6 +407,15 @@ console.log('\n== SALVATAGGI ==');
   await ctx.close();
 }
 
+{
+  // 1.1.6: dopo l'incasso la partita riparte da capo, ma i record tornano.
+  const { ctx, page, errori } = await nuovaPagina({ viewport: { width: 1024, height: 700 } }, { daprod_claw_record: JSON.stringify({ prese: 77, shiny: 5, gradoMax: 'x' }) });
+  await page.waitForTimeout(800);
+  const st = await page.evaluate(() => CLAW.stato.st);
+  T('i record della partita incassata tornano nella nuova', st.prese === 77 && st.shiny === 5 && st.gradoMax === 0 && errori.length === 0, JSON.stringify(st));
+  await ctx.close();
+}
+
 // ============================================================ HOME
 console.log('\n== HOME ==');
 {
