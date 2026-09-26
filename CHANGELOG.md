@@ -4,6 +4,15 @@ Tutte le versioni notevoli del gioco. Le date sono in formato AAAA-MM-GG.
 Ogni versione pubblicata ha anche una [release GitHub](https://github.com/cammo22/DaProd-ClawMachine/releases)
 con le app per Android, Windows e Mac, e va online su [GitHub Pages](https://cammo22.github.io/DaProd-ClawMachine/) subito dopo il push.
 
+## [1.1.6] — 2026-09-26 · Gli avvisi in alto a sinistra, e i record che restano
+
+- **Gli avvisi dei potenziamenti stanno in alto a sinistra**, sotto il marchio DaProd e la versione: «spostiamoli più
+  in alto, tutti a sinistra». Prima erano a metà schermo sulla destra, sopra la vasca.
+- **Le pastiglie non rallentano più**: nascono una volta e cambia solo il conto alla rovescia. Prima si riscrivevano da
+  capo quattro volte al secondo e il lampeggio ripartiva ogni volta.
+- **All'incasso i potenziamenti si azzerano e i record restano**: la partita riparte da capo (i turbo DaProd vanno
+  ricomprati col portafoglio), ma le statistiche tornano nella partita nuova.
+
 ## [1.1.5] — 2026-09-26 · Niente premio fisso, e i potenziamenti DaProd
 
 - **La vincita è dinamica** (con la [DaProd Suite](https://github.com/cammo22/DaProdSuite) 1.5.1): «togliamo il max dei
