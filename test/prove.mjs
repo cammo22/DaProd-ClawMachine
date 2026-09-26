@@ -296,9 +296,29 @@ console.log('\n== COMPUTER ==');
       premio: document.getElementById('finePremio').textContent, tasto: document.getElementById('fineBtn').textContent,
       stima: [CLAW.premioStimato(1e3), CLAW.premioStimato(1e11)] };
     document.getElementById('fine').hidden = true; return r; });
-  T('alla fine il pannello fa vedere le lire di gioco e il premio in euro', pannello.visto && pannello.lire === 'L.6,1 mld' && /€ 2\d,\d\d/.test(pannello.premio), JSON.stringify(pannello));
-  T('il premio va da 20 a 30 euro', pannello.stima[0] === 20 && pannello.stima[1] === 30, JSON.stringify(pannello.stima));
+  T('alla fine il pannello fa vedere le lire di gioco e il premio in euro', pannello.visto && pannello.lire === 'L.6,1 mld' && /€ \d+,\d\d/.test(pannello.premio), JSON.stringify(pannello));
+  // 1.1.5: niente premio fisso. Fuori dalla suite si stima la paga di chi gioca: da zero a 37,5 euro.
+  T('il premio cresce col punteggio, senza tetto fisso', pannello.stima[0] === 0 && pannello.stima[1] === 37.5, JSON.stringify(pannello.stima));
   T('fuori dalla sala il tasto ricomincia da capo', /RICOMINCIA/.test(pannello.tasto), pannello.tasto);
+
+  // --- I POTENZIAMENTI DaProd (1.1.5) ---
+  const tb = await page.evaluate(() => {
+    const C = CLAW, r = {};
+    r.fuori = document.getElementById('turboBtn').hidden;
+    r.molt0 = C.bonus().lire; const m0 = C.rendita();
+    C.accendiTurbo('rendita'); r.rendita = C.rendita() / Math.max(1e-9, m0);
+    C.accendiTurbo('gratis'); C.aggiornaEffetti();
+    r.chip = document.querySelectorAll('#effetti .eff').length;
+    r.bordo = document.getElementById('bordoSx').classList.contains('su');
+    C.stato.turbo.gratis.fino = Date.now() + 5000; C.aggiornaEffetti();
+    r.lampeggia = !!document.querySelector('#effetti .eff.finisce');
+    for (const k in C.stato.turbo) C.stato.turbo[k].fino = Date.now() - 1; C.aggiornaEffetti();
+    r.spenti = document.querySelectorAll('#effetti .eff').length === 0 && !C.turboAttivo('rendita');
+    return r;
+  });
+  T('i potenziamenti DaProd non ci sono fuori dalla suite', tb.fuori, JSON.stringify(tb));
+  T('RENDITA ×5 moltiplica la rendita', Math.abs(tb.rendita - 5) < 0.01, JSON.stringify(tb));
+  T('gli effetti accesi si vedono ai lati, e lampeggiano negli ultimi 10 s', tb.chip === 2 && tb.bordo && tb.lampeggia && tb.spenti, JSON.stringify(tb));
 
   // --- LUCI E QUALITÀ (1.1.2) ---
   T('luci: due luci colorate per le zone, non una per zona', await page.evaluate(() => CLAW.luciAccese()) === 2);
