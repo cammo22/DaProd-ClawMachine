@@ -4,6 +4,18 @@ Tutte le versioni notevoli del gioco. Le date sono in formato AAAA-MM-GG.
 Ogni versione pubblicata ha anche una [release GitHub](https://github.com/cammo22/DaProd-ClawMachine/releases)
 con le app per Android, Windows e Mac, e va online su [GitHub Pages](https://cammo22.github.io/DaProd-ClawMachine/) subito dopo il push.
 
+## [1.1.5] — 2026-09-26 · Niente premio fisso, e i potenziamenti DaProd
+
+- **La vincita è dinamica** (con la [DaProd Suite](https://github.com/cammo22/DaProdSuite) 1.5.1): «togliamo il max dei
+  20 euro di vincita». Quello che metti (ricariche e potenziamenti) rende di più quanto più vai avanti col punteggio,
+  da metà a tre volte, e finire la collezione lo moltiplica per 1,25, più velocità e montepremi. Il pannello della
+  fine fa vedere la stima della sala, contando in su.
+- **⚡ Potenziamenti DaProd coi soldi veri**: Super presa, Pinza larga, Prese gratis, Pioggia shiny, Rendita ×5, Lire
+  ×10, per 2, 5 o 10 minuti. Si pagano dal portafoglio della suite, e ogni volta la sala avvisa. Nel pannello c'è anche
+  quanto porteresti a casa adesso.
+- **Gli effetti accesi si vedono ai lati**, col conto alla rovescia, e lampeggiano negli ultimi dieci secondi.
+- **L'incasso dice tutto prima**, anche quello della cornice, e dopo il sì il gioco riparte da capo.
+
 ## [1.1.4] — 2026-09-25 · La fine che paga, e PRENDI al centro
 
 - **La fine della partita ha il suo pannello**: tutti e 20 i modellini, e le tue lire di gioco (anche 6,1 miliardi)

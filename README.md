@@ -62,9 +62,18 @@ capienza, motore, fortuna shiny e rendita, più le teste da sbloccare.
 ### 🏆 La fine
 
 Tutti e 20 i modellini in collezione e la partita è finita: il pannello fa vedere le tue lire di gioco
-(anche miliardi) diventare euro. Nella [DaProd Suite](https://github.com/cammo22/DaProdSuite) si riscatta:
-da 20 a 30 euro nel portafoglio, più il premio della velocità e un pezzo del montepremi, e il gioco
-ricomincia da capo. Fuori dalla suite si ricomincia e basta.
+(anche miliardi) diventare euro. Nella [DaProd Suite](https://github.com/cammo22/DaProdSuite) si riscatta, e
+**non c'è un premio fisso** (dalla 1.1.5): quello che hai messo (ricariche e potenziamenti) rende di più quanto
+più sei andato avanti, da metà fino a tre volte, e finire lo moltiplica ancora per 1,25, più il premio della
+velocità e un pezzo del montepremi. La sala dice tutto prima di incassare, e il gioco ricomincia da capo.
+Fuori dalla suite si ricomincia e basta.
+
+### ⚡ Potenziamenti DaProd (solo nella suite)
+
+Il tasto **⚡ DaProd** a destra di PRENDI apre sei potenziamenti a tempo, che si pagano coi **soldi veri** del
+portafoglio della suite (la sala chiede conferma ogni volta): Super presa, Pinza larga, Prese gratis, Pioggia
+shiny, Rendita ×5 e Lire ×10. Accesi, si vedono ai lati dello schermo col conto alla rovescia, e negli ultimi
+dieci secondi lampeggiano. Nello stesso pannello c'è quanto porteresti a casa adesso, e finendo.
 
 **Mai bloccato**: ogni fase del carroponte ha un tempo massimo, la presa si paga solo se parte davvero,
 sopra la buca non si cala, e con meno di L.100 arriva il **bonus di cortesia**.
