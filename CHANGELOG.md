@@ -4,6 +4,20 @@ Tutte le versioni notevoli del gioco. Le date sono in formato AAAA-MM-GG.
 Ogni versione pubblicata ha anche una [release GitHub](https://github.com/cammo22/DaProd-ClawMachine/releases)
 con le app per Android, Windows e Mac, e va online su [GitHub Pages](https://cammo22.github.io/DaProd-ClawMachine/) subito dopo il push.
 
+## [1.2.0] — 2026-09-27 · Resti quanto vuoi, e si vede dall'alto
+
+- **Finita la collezione non finisce la partita**: «quando raggiungi l'ultima stanza non deve finire subito, puoi
+  rimanere quanto vuoi». Arriva la festa, poi si continua a giocare: in alto resta una pillola dorata, e il riscatto si
+  apre solo quando la tocchi. Anche il pannello del riscatto ha **Continua a giocare**. Il premio di chi finisce resta
+  valido finché non riscatti.
+- **Il bagliore è un filo**: «togliamo quel bagliore pesante». Si accendono solo le luci vere, con l'alone corto.
+- **La camera sta più in alto**: la vasca si guarda dall'alto (66° in verticale, 52° in orizzontale) e la pinza non
+  copre più quello che sta sotto.
+- **I potenziamenti attivi si chiudono**: una testata «⚡ 2 attivi» in alto a sinistra; toccata, la lista diventa una
+  pillola col tempo che resta, e resta chiusa.
+- **Notifiche: tutte o solo importanti**, dalle opzioni. Con «solo importanti» restano gli avvisi dei soldi e degli
+  incassi.
+
 ## [1.1.6] — 2026-09-26 · Gli avvisi in alto a sinistra, e i record che restano
 
 - **Gli avvisi dei potenziamenti stanno in alto a sinistra**, sotto il marchio DaProd e la versione: «spostiamoli più
