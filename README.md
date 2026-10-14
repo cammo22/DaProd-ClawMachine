@@ -1,3 +1,8 @@
+<!-- discord-card -->
+<p align="center">
+  <a href="https://discord.gg/Njs52aacwq"><img src=".github/discord-card.svg" alt="Entra nella community DaProd su Discord" width="720"></a>
+</p>
+
 # DaProd · Claw Machine 🦾
 
 [![▶ GIOCA ORA](https://img.shields.io/badge/%E2%96%B6_GIOCA_ORA-DaProd_Claw_Machine-ffd54a?style=for-the-badge&labelColor=1a1428)](https://cammo22.github.io/DaProd-ClawMachine/gioca/)
@@ -151,14 +156,3 @@ node test/foto.mjs vasca         # foto (computer e telefono) in test/.out/: vas
 
 **DaProd — Sala Giochi** 🕹️ · sviluppato con Three.js · rilasciato con licenza MIT · prova anche il
 [Coin Dozer 🪙](https://cammo22.github.io/daprod-coin-dozer/)
-
----
-
-<!-- discord-card -->
-## 💬 Community
-
-<p align="center">
-  <a href="https://discord.gg/Njs52aacwq"><img src=".github/discord-card.svg" alt="Entra nella community DaProd su Discord" width="720"></a>
-</p>
-
-Domande, idee, bug o solo voglia di chiacchierare? Entra nel **[Discord di DaProd](https://discord.gg/Njs52aacwq)**: ogni app ha la sua stanza e le nuove versioni arrivano in automatico.
