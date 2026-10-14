@@ -7,6 +7,7 @@
 [![Changelog](https://img.shields.io/badge/📅_Changelog-mantenuto-ffab00?style=flat-square)](CHANGELOG.md)
 [![Made with Three.js](https://img.shields.io/badge/Three.js-r160-black?style=flat-square&logo=three.js)](https://threejs.org/)
 [![Licenza MIT](https://img.shields.io/badge/Licenza-MIT-blue?style=flat-square)](LICENSE)
+[![Discord](https://img.shields.io/badge/Discord-DaProd-5865F2?logo=discord&logoColor=white)](https://discord.gg/Njs52aacwq)
 
 La **claw machine della sala giochi DaProd**, rifatta da zero: una **Grande Vasca a cinque zone** con un
 carroponte gigante. **Pesca, grabba e acchiappa** venti modellini 3D e potenziali in **otto gradi sempre
