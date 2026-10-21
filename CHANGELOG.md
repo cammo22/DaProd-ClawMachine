@@ -4,7 +4,7 @@ Tutte le versioni notevoli del gioco. Le date sono in formato AAAA-MM-GG.
 Ogni versione pubblicata ha anche una [release GitHub](https://github.com/cammo22/DaProd-ClawMachine/releases)
 con le app per Android, Windows e Mac, e va online su [GitHub Pages](https://cammo22.github.io/DaProd-ClawMachine/) subito dopo il push.
 
-## [Non ancora pubblicato]
+## [1.2.1] — 2026-10-21 · Ti avvisa quando c'è una versione nuova
 
 - **Avviso di aggiornamento nelle app** (Windows, Mac, Android): otto secondi dopo l'apertura, e poi ogni 4 ore, il gioco guarda
   l'ultima release su GitHub; se è più nuova compare in alto «Aggiornamento X.Y.Z disponibile» e un tocco apre la pagina per
