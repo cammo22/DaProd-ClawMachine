@@ -736,7 +736,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-const VERSIONE = 'v1.2.0';
+const VERSIONE = 'v1.2.1';
 const $ = (id) => document.getElementById(id);
 const PARAMETRI = new URLSearchParams(location.search);
 // gioco = la partita vera; demo = la macchina gioca da sola (sfondo della home); vetrina = sfilata dei modellini
@@ -3398,6 +3398,43 @@ window.CLAW = {
   miniatura, qualita: applicaQualita, triangoli: () => GEO.map(g => g.index.count / 3),
   camera: () => posaCamera(1, true),
 };
+</script>
+<!-- Controllo aggiornamenti (solo nelle app): all'avvio e poi ogni 4 ore guarda l'ultima release su GitHub e,
+     se è più nuova, accende un badge in alto. Non blocca niente; senza rete sta zitto e riprova dopo 20 minuti.
+     Sul web (GitHub Pages) il gioco è sempre l'ultimo: lì non fa niente. -->
+<script>
+(() => {
+  const REPO = 'cammo22/DaProd-ClawMachine';
+  const NELL_APP = location.protocol === 'app:' || location.hostname === 'appassets.androidplatform.net';
+  if (!NELL_APP) return;
+  const num = (v) => String(v).replace(/^v/, '').split('.').map((n) => parseInt(n, 10) || 0);
+  const piuNuova = (a, b) => { const x = num(a), y = num(b); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); return false; };
+  let badge = null, mostrata = '';
+  const mostra = (v, url) => {
+    if (mostrata === v) return;
+    mostrata = v;
+    if (!badge) {
+      badge = document.createElement('button');
+      badge.id = 'agg-badge';
+      badge.style.cssText = 'position:fixed;top:calc(8px + env(safe-area-inset-top, 0px));left:50%;transform:translateX(-50%);z-index:60;padding:6px 14px;border-radius:16px;border:1px solid rgba(255,213,74,.55);background:rgba(20,16,6,.92);color:#ffd54a;font:700 13px system-ui,sans-serif;cursor:pointer;box-shadow:0 0 14px rgba(255,213,74,.35)';
+      document.body.appendChild(badge);
+    }
+    badge.textContent = 'Aggiornamento ' + v.replace(/^v/, '') + ' disponibile';
+    badge.title = 'Apre la pagina della release per scaricarlo';
+    badge.onclick = () => { location.href = url; };
+  };
+  const controlla = async () => {
+    try {
+      const attuale = (document.getElementById('versione') || {}).textContent || '';
+      const r = await fetch('https://api.github.com/repos/' + REPO + '/releases/latest', { cache: 'no-store' });
+      if (!r.ok) throw new Error(r.status);
+      const j = await r.json();
+      if (j.tag_name && /\d/.test(attuale) && piuNuova(j.tag_name, attuale)) mostra(j.tag_name, j.html_url || 'https://github.com/' + REPO + '/releases/latest');
+      setTimeout(controlla, 4 * 3600 * 1000);
+    } catch (e) { setTimeout(controlla, 20 * 60 * 1000); }
+  };
+  setTimeout(controlla, 8000);
+})();
 </script>
 </body>
 </html>
